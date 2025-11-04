@@ -171,11 +171,18 @@ export async function handleGameState(
   }
 
   try {
+    console.log('📊 获取游戏状态，gameId:', gameId);
     const id = env.GAME_STATE.idFromName(gameId);
+    console.log('📍 DO ID:', id.toString());
+    
     const gameState = env.GAME_STATE.get(id);
+    console.log('📨 调用DO /state');
 
     const response = await gameState.fetch(new Request('http://do/state'));
+    console.log('📥 DO响应:', response.status);
+    
     const game = await response.json();
+    console.log('📦 响应内容:', game.error ? 'ERROR: ' + game.error : 'OK');
 
     return new Response(JSON.stringify(game), {
       headers: {
