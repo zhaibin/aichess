@@ -3,6 +3,8 @@ import { Env, CreateGameRequest, MakeMoveRequest, AIGameQueueMessage, AI_MODELS 
 import { getAIMove } from './ai-player';
 
 export { GameState } from './game-state';
+export { WebSocketRoom } from './websocket-room';
+export { UserStore } from './user-system';
 
 export default {
   /**

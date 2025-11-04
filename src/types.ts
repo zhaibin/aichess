@@ -99,5 +99,24 @@ export interface Env {
   AI: any;
   GAME_STATE: DurableObjectNamespace;
   AI_GAME_QUEUE: Queue<AIGameQueueMessage>;
+  USER_STORE?: DurableObjectNamespace;
+}
+
+// 新增：WebSocket消息类型
+export interface WebSocketMessage {
+  type: 'join' | 'move' | 'chat' | 'state' | 'leave';
+  gameId?: string;
+  data?: any;
+}
+
+// 新增：在线对战房间
+export interface OnlineGameRoom {
+  id: string;
+  players: {
+    white?: string; // 用户ID
+    black?: string; // 用户ID
+  };
+  spectators: Set<string>;
+  gameState: GameState | null;
 }
 
