@@ -103,14 +103,44 @@ export class GameState extends DurableObject {
    * 执行移动
    */
   private async handleMove(request: Request): Promise<Response> {
-    if (!this.game || this.game.status !== 'active') {
-      return new Response(JSON.stringify({ error: 'Game not active' }), {
+    console.log('🎯 Durable Object handleMove 被调用');
+    console.log('this.game 存在?', !!this.game);
+    if (this.game) {
+      console.log('this.game.status:', this.game.status);
+      console.log('this.game.id:', this.game.id);
+    }
+    
+    if (!this.game) {
+      console.error('❌ this.game 是 null/undefined');
+      // 尝试从storage恢复
+      const stored = await this.state.storage.get('game');
+      console.log('从storage恢复:', stored);
+      if (stored) {
+        this.game = stored as any;
+        console.log('✅ 从storage恢复成功');
+      }
+    }
+    
+    if (!this.game) {
+      console.error('❌ Game not found even after storage check');
+      return new Response(JSON.stringify({ error: 'Game not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    if (this.game.status !== 'active') {
+      console.error('❌ Game status is not active:', this.game.status);
+      return new Response(JSON.stringify({ error: 'Game not active', status: this.game.status }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
+    
+    console.log('✅ 游戏状态检查通过');
 
     const { from, to, promotion } = await request.json();
+    console.log('移动请求:', { from, to, promotion });
 
     // 验证移动
     const chess = new ChessEngine(this.game.fen);
