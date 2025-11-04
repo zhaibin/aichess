@@ -29,6 +29,11 @@
   - English、Français、Español
   - Deutsch、Italiano、Português
   - Русский、日本語、한국어
+  - **完整SEO多语言优化** 🆕
+    - 每种语言独立的meta标签
+    - hreflang标签支持
+    - 智能语言检测（URL参数/浏览器偏好）
+    - 多语言sitemap
 
 - **响应式设计**
   - PC端：左侧棋盘，右侧信息面板
@@ -168,7 +173,21 @@ GET /api/game-state?gameId=xxx
 
 ## 域名
 
-aichess.win
+**aichess.win**
+
+### 多语言访问
+- 默认：https://aichess.win （自动检测浏览器语言）
+- 简体中文：https://aichess.win/?lang=zh-CN
+- 繁体中文：https://aichess.win/?lang=zh-TW
+- English：https://aichess.win/?lang=en
+- Français：https://aichess.win/?lang=fr
+- Español：https://aichess.win/?lang=es
+- Deutsch：https://aichess.win/?lang=de
+- Italiano：https://aichess.win/?lang=it
+- Português：https://aichess.win/?lang=pt
+- Русский：https://aichess.win/?lang=ru
+- 日本語：https://aichess.win/?lang=ja
+- 한국어：https://aichess.win/?lang=ko
 
 ## 自动化工作流程
 
