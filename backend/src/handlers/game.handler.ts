@@ -53,12 +53,16 @@ export async function handleCreateGame(
     const game = await response.json();
 
     // AI vs AI游戏，发送到队列启动
-    if (body.mode === 'ai-vs-ai' && body.whitePlayerType === 'ai') {
-      console.log('AI vs AI游戏，发送首步到队列');
+    if (game.mode === 'ai-vs-ai') {
+      console.log('🤖 AI vs AI游戏，发送首步到队列');
+      console.log('📤 队列消息:', { gameId: game.id, currentPlayer: 'w' });
+      
       await env.AI_GAME_QUEUE.send({
-        gameId,
+        gameId: game.id, // ✅ 使用返回的game.id
         currentPlayer: 'w'
       });
+      
+      console.log('✅ 队列消息已发送');
     }
 
     return new Response(JSON.stringify(game), {
