@@ -33,14 +33,22 @@ export async function handleCreateGame(
 
     // 创建游戏ID
     const gameId = crypto.randomUUID();
+    console.log('🎮 创建游戏，ID:', gameId);
+    
     const id = env.GAME_STATE.idFromName(gameId);
+    console.log('📍 DO ID:', id.toString());
+    
     const gameState = env.GAME_STATE.get(id);
+    console.log('✅ 获取DO实例');
 
     // 调用Durable Object创建游戏
+    console.log('📨 调用DO /create');
     const response = await gameState.fetch(new Request('http://do/create', {
       method: 'POST',
       body: JSON.stringify(body)
     }));
+    
+    console.log('📥 DO响应状态:', response.status);
 
     const game = await response.json();
 
