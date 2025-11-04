@@ -1288,34 +1288,64 @@ export function getFullHTMLTemplate(lang: Language): string {
       }
     }
     
-    async function getAIMove() {
+    async function getAIMove(retryCount = 0) {
+      const moveStartTime = Date.now();
+      const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
+      
       try {
-        console.log('请求AI移动...');
+        console.log('请求AI移动...', retryCount > 0 ? `[重试 ${retryCount}]` : '');
         const response = await fetch('/api/ai-move', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ gameId: gameState.id })
         });
         
+        const moveEndTime = Date.now();
+        const thinkingTime = Math.floor((moveEndTime - moveStartTime) / 1000);
+        
         if (response.ok) {
+          console.log('✅ AI移动成功，思考时间:', thinkingTime, '秒');
+          
+          // ✅ 扣除实际思考时间
+          currentPlayer.timeRemaining = Math.max(0, currentPlayer.timeRemaining - thinkingTime);
+          
           gameState = await response.json();
           chess = new Chess(gameState.fen);
           renderBoard();
           updateGameInfo();
+          
+          // ✅ 重置计时起点
+          lastMoveTime = Date.now();
+          
           console.log('AI移动完成');
         } else {
           const error = await response.json();
-          console.error('AI移动失败:', error);
+          console.error('❌ AI移动失败 (HTTP', response.status, '):', error);
+          
+          // ✅ 400错误（Invalid move）时重试
+          if (response.status === 400 && retryCount < 3) {
+            console.log('🔄 AI移动无效，1秒后重试...', retryCount + 1, '/3');
+            setTimeout(() => getAIMove(retryCount + 1), 1000);
+          } else {
+            console.error('❌ AI移动失败次数过多');
+            alert('AI移动失败，请重新开始游戏');
+          }
         }
       } catch (error) {
         console.error('AI move failed:', error);
+        
+        // 网络错误也重试
+        if (retryCount < 3) {
+          console.log('🔄 网络错误，1秒后重试...', retryCount + 1, '/3');
+          setTimeout(() => getAIMove(retryCount + 1), 1000);
+        }
       }
     }
     
     /**
-     * AI vs AI前端触发移动
+     * AI vs AI前端触发移动（带重试）
      */
-    async function triggerAIvsAIMove() {
+    async function triggerAIvsAIMove(retryCount = 0) {
       if (!gameState || gameState.mode !== 'ai-vs-ai' || gameState.status !== 'active') {
         console.log('⚠️ 游戏状态不适合AI移动');
         return;
@@ -1328,7 +1358,9 @@ export function getFullHTMLTemplate(lang: Language): string {
         return;
       }
       
-      console.log('🤖 触发AI移动:', currentPlayer.name, '(' + gameState.currentTurn + ')');
+      console.log('🤖 触发AI移动:', currentPlayer.name, '(' + gameState.currentTurn + ')', retryCount > 0 ? `[重试 ${retryCount}]` : '');
+      
+      const moveStartTime = Date.now(); // 记录开始时间
       
       try {
         const response = await fetch('/api/ai-move', {
@@ -1339,35 +1371,63 @@ export function getFullHTMLTemplate(lang: Language): string {
         
         if (response.ok) {
           const newState = await response.json();
-          console.log('✅ AI移动成功');
+          const moveEndTime = Date.now();
+          const thinkingTime = Math.floor((moveEndTime - moveStartTime) / 1000);
+          
+          console.log('✅ AI移动成功，思考时间:', thinkingTime, '秒');
+          
+          // ✅ 扣除实际思考时间
+          currentPlayer.timeRemaining = Math.max(0, currentPlayer.timeRemaining - thinkingTime);
+          console.log('⏱️', currentPlayer.name, '消耗', thinkingTime, '秒，剩余', currentPlayer.timeRemaining, '秒');
+          
           gameState = newState;
           chess = new Chess(gameState.fen);
           renderBoard();
           updateGameInfo();
           
-          // ✅ 重置倒计时（AI移动后）
-          resetTimer();
+          // ✅ 重置倒计时起点（下一个玩家开始计时）
+          lastMoveTime = Date.now();
           
           // 如果游戏还在进行，触发下一步
           if (gameState.status === 'active') {
             const nextPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
             if (nextPlayer.type === 'ai') {
-              console.log('🔁 2秒后触发下一步AI移动');
-              setTimeout(() => triggerAIvsAIMove(), 2000);
+              console.log('🔁 立即触发下一步AI移动');
+              setTimeout(() => triggerAIvsAIMove(0), 500);
             }
           } else {
             console.log('🏁 游戏结束，状态:', gameState.status);
             if (timerInterval) {
               clearInterval(timerInterval);
+              timerInterval = null;
               console.log('⏱️ 倒计时已停止');
             }
           }
         } else {
           const error = await response.json();
-          console.error('❌ AI移动失败:', error);
+          console.error('❌ AI移动失败 (HTTP', response.status, '):', error);
+          
+          // ✅ 400错误（Invalid move）时重试
+          if (response.status === 400 && retryCount < 3) {
+            console.log('🔄 AI移动无效，1秒后重试...', retryCount + 1, '/3');
+            setTimeout(() => triggerAIvsAIMove(retryCount + 1), 1000);
+          } else {
+            console.error('❌ AI移动失败次数过多，停止游戏');
+            gameState.status = 'error';
+            if (timerInterval) {
+              clearInterval(timerInterval);
+              timerInterval = null;
+            }
+          }
         }
       } catch (error) {
         console.error('❌ 触发AI移动异常:', error);
+        
+        // 网络错误也重试
+        if (retryCount < 3) {
+          console.log('🔄 网络错误，1秒后重试...', retryCount + 1, '/3');
+          setTimeout(() => triggerAIvsAIMove(retryCount + 1), 1000);
+        }
       }
     }
     
@@ -1581,17 +1641,18 @@ export function getFullHTMLTemplate(lang: Language): string {
         const now = Date.now();
         const elapsed = Math.floor((now - lastMoveTime) / 1000);
         
-        // 扣除当前回合玩家的时间
-        const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
-        const opponent = gameState.currentTurn === 'w' ? gameState.blackPlayer : gameState.whitePlayer;
+        // 当前正在思考的玩家
+        const thinkingPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
+        const waitingPlayer = gameState.currentTurn === 'w' ? gameState.blackPlayer : gameState.whitePlayer;
         
-        // 计算新时间（不修改gameState，只显示）
-        const newTime = Math.max(0, currentPlayer.timeRemaining - elapsed);
+        // 计算思考时间（实时显示，不修改gameState）
+        const displayTime = Math.max(0, thinkingPlayer.timeRemaining - elapsed);
         
-        if (newTime <= 0 && currentPlayer.timeRemaining > 0) {
+        // 超时检测
+        if (displayTime <= 0 && thinkingPlayer.timeRemaining > 0) {
           // 时间用完，判负
-          console.log('⏰ 超时！', currentPlayer.name, '时间用完');
-          currentPlayer.timeRemaining = 0;
+          console.log('⏰ 超时！', thinkingPlayer.name, '时间用完');
+          thinkingPlayer.timeRemaining = 0;
           gameState.status = 'timeout';
           gameState.winner = gameState.currentTurn === 'w' ? 'b' : 'w';
           
@@ -1603,15 +1664,15 @@ export function getFullHTMLTemplate(lang: Language): string {
           // 显示超时胜利
           showVictory(
             gameState.winner === 'w' ? '白方' : '黑方',
-            opponent.name,
+            waitingPlayer.name,
             '超时'
           );
           return;
         }
         
-        // 更新显示（实时倒计时）
-        updateTimer(gameState.currentTurn === 'w' ? 'white-timer' : 'black-timer', newTime);
-        updateTimer(gameState.currentTurn === 'w' ? 'black-timer' : 'white-timer', opponent.timeRemaining);
+        // 更新显示（只显示，不扣除）
+        updateTimer('white-timer', gameState.currentTurn === 'w' ? displayTime : gameState.whitePlayer.timeRemaining);
+        updateTimer('black-timer', gameState.currentTurn === 'b' ? displayTime : gameState.blackPlayer.timeRemaining);
       }, 100); // 每0.1秒更新一次
       
       console.log('⏱️ 倒计时已启动');
@@ -1622,11 +1683,13 @@ export function getFullHTMLTemplate(lang: Language): string {
       const now = Date.now();
       const elapsed = Math.floor((now - lastMoveTime) / 1000);
       
-      // 在重置前，先保存当前玩家消耗的时间
+      // ✅ 关键修复：移动后，扣除的是刚才移动的玩家的时间
+      // currentTurn已经切换，所以上一个玩家是currentTurn的对手
       if (gameState && gameState.status === 'active') {
-        const prevPlayer = gameState.currentTurn === 'w' ? gameState.blackPlayer : gameState.whitePlayer;
-        prevPlayer.timeRemaining = Math.max(0, prevPlayer.timeRemaining - elapsed);
-        console.log('⏱️ 倒计时重置,', (prevPlayer.color === 'w' ? '白方' : '黑方'), '消耗', elapsed, '秒，剩余', prevPlayer.timeRemaining, '秒');
+        // 刚才移动的是对方（因为currentTurn已经切换了）
+        const justMovedPlayer = gameState.currentTurn === 'w' ? gameState.blackPlayer : gameState.whitePlayer;
+        justMovedPlayer.timeRemaining = Math.max(0, justMovedPlayer.timeRemaining - elapsed);
+        console.log('⏱️ 倒计时重置,', (justMovedPlayer.color === 'w' ? '白方' : '黑方'), '刚才移动，消耗', elapsed, '秒，剩余', justMovedPlayer.timeRemaining, '秒');
       }
       
       lastMoveTime = now;
