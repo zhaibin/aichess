@@ -1,7 +1,7 @@
 // Durable Object实现 - 游戏状态管理
 import { DurableObject } from 'cloudflare:workers';
 import { ChessEngine } from './chess-engine';
-import { GameState, Move, Player, Env, CreateGameRequest } from './types';
+import { GameState, Move, Player, Env, CreateGameRequest } from '../types';
 
 export class GameState extends DurableObject {
   private state: DurableObjectState;

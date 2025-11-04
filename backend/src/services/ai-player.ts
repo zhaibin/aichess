@@ -1,6 +1,7 @@
 // AI棋手实现
 import { ChessEngine } from './chess-engine';
-import { GameState, AI_MODELS } from './types';
+import { GameState } from '../types';
+import { AI_MODELS } from '../config/constants';
 
 /**
  * 生成AI棋手的系统提示词

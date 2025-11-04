@@ -5,15 +5,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/badge/version-4.0.0-blue.svg)](https://github.com/aichess/aichess)
 
-[English](./README.md) | [简体中文](./README_ZH.md)
-
 ## 🌟 v4.0 重大更新
 
 ### 🏗️ **前后端分离架构**
 - ✅ Backend/Frontend完全分离
 - ✅ 模块化设计，可维护性提升500%
 - ✅ 支持独立开发和测试
-- ✅ 代码行数：1876行 → 30行Worker入口
+- ✅ Worker入口：1876行 → 30行
 
 ### 🎯 **核心特性**
 - 🤖 **5种AI模型**: ChatGPT 20B, Llama4 17B, Gemma 3 12B, QwQ 32B, Deepseek 32B
@@ -26,12 +24,6 @@
 
 ### 在线体验
 访问：**https://aichess.win**
-
-支持语言：
-- 🇨🇳 [简体中文](https://aichess.win/?lang=zh-CN)
-- 🇺🇸 [English](https://aichess.win/?lang=en)
-- 🇯🇵 [日本語](https://aichess.win/?lang=ja)
-- ...11种语言
 
 ### 本地开发
 
@@ -51,6 +43,18 @@ npm install
 npm run dev
 ```
 
+### 部署
+
+```bash
+# 部署Backend到Cloudflare Workers
+cd backend
+npm run deploy
+
+# 构建Frontend
+cd frontend
+npm run build
+```
+
 ## 📁 项目结构
 
 ```
@@ -66,6 +70,7 @@ AiChess/
 │
 ├── frontend/         # 独立前端
 │   ├── src/
+│   │   ├── main.ts
 │   │   ├── components/
 │   │   └── styles/
 │   └── vite.config.ts
@@ -87,12 +92,6 @@ AiChess/
 - ⏱️ 10分钟标准
 - ⏱️ 15分钟慢棋
 
-### 技术亮点
-- **自研引擎**: 完全自主的Chess引擎
-- **Durable Objects**: 持久化游戏状态
-- **Workers AI**: 集成5种AI模型
-- **实时同步**: WebSocket支持（规划中）
-
 ## 🛠️ 技术栈
 
 ### Backend
@@ -106,35 +105,20 @@ AiChess/
 - **TypeScript**: 类型安全
 - **原生JS**: 零框架依赖
 
-### DevOps
-- **GitHub Actions**: 自动化CI/CD
-- **Wrangler**: Cloudflare部署工具
-
 ## 📖 文档
 
 - [架构设计](./ARCHITECTURE.md)
+- [项目状态](./PROJECT_STATUS.md)
+- [重构总结](./REFACTORING_SUMMARY.md)
 - [部署指南](./DEPLOY.md)
-- [开发文档](./DEVELOPMENT.md)
-- [API文档](./docs/API.md)
 
 ## 🤝 贡献
 
 欢迎贡献！请查看 [CONTRIBUTING.md](./CONTRIBUTING.md)
 
-### 开发流程
-1. Fork项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m '功能: 添加某某功能'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启Pull Request
-
 ## 📝 许可证
 
 本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE)
-
-## 🌟 Star History
-
-如果这个项目对你有帮助，请给个Star⭐
 
 ## 📧 联系方式
 

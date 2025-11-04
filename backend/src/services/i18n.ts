@@ -1,6 +1,6 @@
 // 多语言支持
 
-import { Language } from './types';
+import { Language } from '../types';
 
 export const translations: Record<Language, Record<string, string>> = {
   'zh-CN': {
