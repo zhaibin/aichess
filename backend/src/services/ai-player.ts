@@ -86,28 +86,34 @@ export async function getAIMove(
   aiModel: string,
   env: any
 ): Promise<{ from: string; to: string; promotion?: string } | null> {
+  console.log('🎮 getAIMove被调用, 模型:', aiModel);
   const model = AI_MODELS[aiModel];
   if (!model) {
-    console.error('Invalid AI model:', aiModel);
-    return null;
+    console.error('❌ 无效的AI模型:', aiModel);
+    console.log('可用模型:', Object.keys(AI_MODELS));
+    // 使用默认模型
+    console.log('⚠️ 使用随机移动作为降级');
+    return getRandomLegalMove(gameState);
   }
 
   const maxRetries = 3;
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      console.log(`🤖 AI调用 (尝试 ${attempt + 1}/${maxRetries}):`, model.name);
+      console.log(`🤖 AI调用 (尝试 ${attempt + 1}/${maxRetries}):`, model.name, model.modelId);
       
       const messages = [
         { role: 'system', content: getSystemPrompt() },
         { role: 'user', content: getUserPrompt(gameState) }
       ];
 
+      console.log('📤 发送到Workers AI...');
       const response = await env.AI.run(model.modelId, {
         messages,
         temperature: 0.7,
         max_tokens: 100
       });
+      console.log('📥 Workers AI响应:', response);
 
       // 提取响应
       let aiResponse = '';
@@ -171,12 +177,14 @@ export async function getAIMove(
       }
 
     } catch (error) {
-      console.error(`AI调用失败 (尝试 ${attempt + 1}):`, error);
+      console.error(`❌ AI调用失败 (尝试 ${attempt + 1}):`, error);
+      console.error('错误详情:', error instanceof Error ? error.message : String(error));
+      console.error('错误堆栈:', error instanceof Error ? error.stack : '无堆栈');
     }
   }
 
   // 所有重试失败，返回随机合法移动
-  console.log('⚠️ AI失败，使用随机移动');
+  console.log('⚠️ AI所有尝试失败，使用随机合法移动');
   return getRandomLegalMove(gameState);
 }
 
@@ -185,20 +193,25 @@ export async function getAIMove(
  */
 function getRandomLegalMove(gameState: GameState): { from: string; to: string } | null {
   try {
+    console.log('🎲 生成随机合法移动, FEN:', gameState.fen);
     const chess = new ChessEngine(gameState.fen);
     const allMoves = chess.moves();
+    console.log('📋 合法移动数量:', allMoves.length);
 
     if (allMoves.length === 0) {
+      console.error('❌ 没有合法移动（可能是游戏结束）');
       return null;
     }
 
     const randomMove = allMoves[Math.floor(Math.random() * allMoves.length)];
+    console.log('🎯 随机选择:', randomMove);
     return {
       from: randomMove.from,
       to: randomMove.to
     };
   } catch (error) {
-    console.error('随机移动生成失败:', error);
+    console.error('❌ 随机移动生成失败:', error);
+    console.error('错误详情:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }
