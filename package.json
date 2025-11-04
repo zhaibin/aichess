@@ -1,6 +1,6 @@
 {
   "name": "aichess",
-  "version": "2.1.5",
+  "version": "3.0.0",
   "description": "AI Chess Game on Cloudflare Workers",
   "main": "src/index.ts",
   "scripts": {

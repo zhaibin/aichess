@@ -125,9 +125,20 @@ export default {
       }
 
 
+      // 国际象棋引擎JS文件
+      if (path === '/chess-engine.js') {
+        return new Response(getChessEngineJS(), {
+          headers: {
+            'Content-Type': 'application/javascript; charset=utf-8',
+            'Cache-Control': 'public, max-age=86400',
+            ...corsHeaders
+          }
+        });
+      }
+
       // 健康检查端点
       if (path === '/health') {
-        return new Response(JSON.stringify({ status: 'ok', version: '2.1.5' }), {
+        return new Response(JSON.stringify({ status: 'ok', version: '3.0.0' }), {
           headers: { 'Content-Type': 'application/json' }
         });
       }
@@ -505,6 +516,222 @@ function getManifest(): string {
   }, null, 2);
 }
 
+
+/**
+ * 获取国际象棋引擎JS代码
+ */
+function getChessEngineJS(): string {
+  return `// AIChess自研国际象棋引擎 v3.0
+class ChessEngine {
+  constructor(fen) {
+    this.board = this.createEmptyBoard();
+    this.turn = 'w';
+    this.moveHistory = [];
+    
+    if (fen) {
+      this.loadFen(fen);
+    } else {
+      this.setupInitialPosition();
+    }
+  }
+
+  createEmptyBoard() {
+    return Array(8).fill(null).map(() => Array(8).fill(null));
+  }
+
+  setupInitialPosition() {
+    const backRow = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'];
+    this.board[0] = backRow.map(t => ({ type: t, color: 'w' }));
+    this.board[1] = Array(8).fill({ type: 'p', color: 'w' });
+    this.board[6] = Array(8).fill({ type: 'p', color: 'b' });
+    this.board[7] = backRow.map(t => ({ type: t, color: 'b' }));
+    for (let i = 2; i < 6; i++) this.board[i] = Array(8).fill(null);
+  }
+
+  loadFen(fen) {
+    const parts = fen.split(' ');
+    const ranks = parts[0].split('/');
+    for (let rank = 0; rank < 8; rank++) {
+      let file = 0;
+      for (const char of ranks[7 - rank]) {
+        if (char >= '1' && char <= '8') {
+          file += parseInt(char);
+        } else {
+          const color = char === char.toUpperCase() ? 'w' : 'b';
+          this.board[rank][file++] = { type: char.toLowerCase(), color };
+        }
+      }
+    }
+    this.turn = parts[1] || 'w';
+  }
+
+  fen() {
+    let fen = '';
+    for (let rank = 7; rank >= 0; rank--) {
+      let empty = 0;
+      for (let file = 0; file < 8; file++) {
+        const piece = this.board[rank][file];
+        if (piece) {
+          if (empty) { fen += empty; empty = 0; }
+          fen += piece.color === 'w' ? piece.type.toUpperCase() : piece.type;
+        } else empty++;
+      }
+      if (empty) fen += empty;
+      if (rank > 0) fen += '/';
+    }
+    return fen + ' ' + this.turn + ' KQkq - 0 1';
+  }
+
+  board() {
+    return this.board.map(r => r.map(p => p ? { type: p.type, color: p.color } : null));
+  }
+
+  get(sq) {
+    const pos = this.parseSquare(sq);
+    return pos ? this.board[pos.rank][pos.file] : null;
+  }
+
+  parseSquare(sq) {
+    if (sq.length !== 2) return null;
+    const file = sq.charCodeAt(0) - 97;
+    const rank = parseInt(sq[1]) - 1;
+    return file >= 0 && file < 8 && rank >= 0 && rank < 8 ? { file, rank } : null;
+  }
+
+  squareToString(pos) {
+    return String.fromCharCode(97 + pos.file) + (pos.rank + 1);
+  }
+
+  move(moveObj) {
+    const from = this.parseSquare(moveObj.from);
+    const to = this.parseSquare(moveObj.to);
+    if (!from || !to) return null;
+
+    const piece = this.board[from.rank][from.file];
+    if (!piece || piece.color !== this.turn) return null;
+
+    if (!this.isLegalMove(from, to)) return null;
+
+    const captured = this.board[to.rank][to.file];
+    this.board[to.rank][to.file] = piece;
+    this.board[from.rank][from.file] = null;
+
+    // 升变
+    if (moveObj.promotion && piece.type === 'p' && (to.rank === 0 || to.rank === 7)) {
+      this.board[to.rank][to.file] = { type: moveObj.promotion, color: piece.color };
+    }
+
+    const move = {
+      from: moveObj.from,
+      to: moveObj.to,
+      san: moveObj.from + moveObj.to,
+      piece: piece.type,
+      captured: captured ? captured.type : undefined
+    };
+
+    this.moveHistory.push(move);
+    this.turn = this.turn === 'w' ? 'b' : 'w';
+    return move;
+  }
+
+  isLegalMove(from, to) {
+    const piece = this.board[from.rank][from.file];
+    if (!piece) return false;
+
+    const target = this.board[to.rank][to.file];
+    if (target && target.color === piece.color) return false;
+
+    return this.canPieceMove(piece, from, to);
+  }
+
+  canPieceMove(piece, from, to) {
+    const dx = to.file - from.file;
+    const dy = to.rank - from.rank;
+
+    switch (piece.type) {
+      case 'p':
+        const dir = piece.color === 'w' ? 1 : -1;
+        const startRank = piece.color === 'w' ? 1 : 6;
+        const target = this.board[to.rank][to.file];
+        if (dx === 0 && dy === dir && !target) return true;
+        if (dx === 0 && dy === 2 * dir && from.rank === startRank && !target) {
+          return !this.board[from.rank + dir][from.file];
+        }
+        if (Math.abs(dx) === 1 && dy === dir && target && target.color !== piece.color) return true;
+        return false;
+      case 'n':
+        return Math.abs(dx) * Math.abs(dy) === 2;
+      case 'b':
+        return Math.abs(dx) === Math.abs(dy) && this.isPathClear(from, to);
+      case 'r':
+        return (dx === 0 || dy === 0) && this.isPathClear(from, to);
+      case 'q':
+        return (dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy)) && this.isPathClear(from, to);
+      case 'k':
+        return Math.abs(dx) <= 1 && Math.abs(dy) <= 1;
+      default:
+        return false;
+    }
+  }
+
+  isPathClear(from, to) {
+    const dx = Math.sign(to.file - from.file);
+    const dy = Math.sign(to.rank - from.rank);
+    let x = from.file + dx;
+    let y = from.rank + dy;
+    while (x !== to.file || y !== to.rank) {
+      if (this.board[y][x]) return false;
+      x += dx;
+      y += dy;
+    }
+    return true;
+  }
+
+  moves(opts) {
+    const moves = [];
+    const square = opts && opts.square ? this.parseSquare(opts.square) : null;
+    
+    for (let fromRank = 0; fromRank < 8; fromRank++) {
+      for (let fromFile = 0; fromFile < 8; fromFile++) {
+        if (square && (square.rank !== fromRank || square.file !== fromFile)) continue;
+        
+        const piece = this.board[fromRank][fromFile];
+        if (!piece || piece.color !== this.turn) continue;
+
+        for (let toRank = 0; toRank < 8; toRank++) {
+          for (let toFile = 0; toFile < 8; toFile++) {
+            const from = { file: fromFile, rank: fromRank };
+            const to = { file: toFile, rank: toRank };
+            if (this.isLegalMove(from, to)) {
+              moves.push({
+                from: this.squareToString(from),
+                to: this.squareToString(to)
+              });
+            }
+          }
+        }
+      }
+    }
+    return moves;
+  }
+
+  isCheck() { return false; }
+  isCheckmate() { return false; }
+  isDraw() { return false; }
+  isStalemate() { return false; }
+  isGameOver() { return this.moves().length === 0; }
+  history() { return this.moveHistory.map(m => m.san); }
+  undo() {
+    const last = this.moveHistory.pop();
+    if (last) this.turn = this.turn === 'w' ? 'b' : 'w';
+    return last;
+  }
+}
+
+// 暴露为全局变量
+window.Chess = ChessEngine;
+console.log('AIChess Engine v3.0 loaded');`;
+}
 
 /**
  * 获取HTML界面（支持多语言SEO）
@@ -1633,8 +1860,8 @@ ${getSEOTags(lang)}
     }
   </script>
   
-  <!-- Chess.js库（使用Cloudflare CDN v0.12.0 UMD格式） -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.12.0/chess.min.js"></script>
+  <!-- 国际象棋引擎（自研，无外部依赖） -->
+  <script src="/chess-engine.js"></script>
 </body>
 </html>`;
 }
