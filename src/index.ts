@@ -1633,8 +1633,12 @@ ${getSEOTags(lang)}
     }
   </script>
   
-  <!-- Chess.js库（使用Cloudflare CDN v0.13.4） -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
+  <!-- Chess.js库（使用Cloudflare CDN v0.13.4 ES模块） -->
+  <script type="module">
+    import { Chess } from 'https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js';
+    window.Chess = Chess;
+    console.log('Chess.js loaded as ES module');
+  </script>
 </body>
 </html>`;
 }
