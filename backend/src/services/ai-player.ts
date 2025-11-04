@@ -302,7 +302,7 @@ export async function getAIMove(
         'qwq-32b': 'reasoning',
         'deepseek-32b': 'reasoning_structured'
       };
-      const promptStyle = promptStyles[modelId as keyof typeof promptStyles] || 'structured';
+      const promptStyle = promptStyles[aiModel as keyof typeof promptStyles] || 'structured';
       
       // 系统提示词：根据模型特点定制
       const systemPrompt = getModelSpecificSystemPrompt(promptStyle, phase);
