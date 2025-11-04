@@ -3,6 +3,65 @@ import { ChessEngine } from './chess-engine';
 import { GameState } from '../types';
 import { AI_MODELS } from '../config/constants';
 import { getGamePhase } from './ai-prompts';
+import { parseAIResponseByStyle } from './ai-parser';
+
+/**
+ * 根据模型特点生成系统提示词
+ */
+function getModelSpecificSystemPrompt(promptStyle: string, phase: string): string {
+  const phaseHints = {
+    opening: 'OPENING: Control center (e4/d4), develop pieces, castle by move 8-10',
+    middlegame: 'MIDDLEGAME: Find tactics (forks/pins/skewers), improve pieces, control key squares',
+    endgame: 'ENDGAME: Activate king, push passed pawns, calculate precisely'
+  };
+  
+  const hint = phaseHints[phase as keyof typeof phaseHints] || phaseHints.opening;
+  
+  switch (promptStyle) {
+    case 'structured': // Llama - 严格标记
+      return `You are a Grandmaster chess AI. ${hint}
+
+OUTPUT FORMAT (use exactly):
+<<<MOVE_START>>>
+{"from":"e2","to":"e4"}
+<<<MOVE_END>>>
+<<<REASON_START>>>
+Brief reason
+<<<REASON_END>>>
+
+Rules: Start with <<<MOVE_START>>>, NO other text before/after markers.`;
+
+    case 'concise': // Gemma - 简单关键词
+      return `You are a Grandmaster chess AI. ${hint}
+
+Format (use exactly):
+MOVE: {"from":"e2","to":"e4"}
+REASON: Brief reason
+
+Start with "MOVE:" immediately.`;
+
+    case 'reasoning': // QwQ - 思维链
+      return `You are a Grandmaster chess AI. ${hint}
+
+Think step-by-step, then conclude:
+FINAL MOVE: {"from":"e2","to":"e4"}
+REASONING: Why this move`;
+
+    case 'reasoning_structured': // DeepSeek - 推理+标记
+      return `You are a Grandmaster chess AI. ${hint}
+
+Analyze briefly, then output:
+<<<MOVE_START>>>
+{"from":"e2","to":"e4"}
+<<<MOVE_END>>>
+<<<REASONING_START>>>
+Your reasoning
+<<<REASONING_END>>>`;
+
+    default:
+      return getModelSpecificSystemPrompt('structured', phase);
+  }
+}
 
 /**
  * 生成AI棋手的系统提示词（角色预设版）
@@ -236,33 +295,28 @@ export async function getAIMove(
       const oppSecs = oppTime % 60;
       const timePressure = yourTime < 60 ? ' ⚠️TIME PRESSURE!' : yourTime < 180 ? ' ⏰' : '';
       
-      // ✅ 分离系统提示词和用户提示词
-      
-      // 系统提示词：角色定义 + JSON格式严格要求
-      const systemPrompt = `You are a chess move generator. You MUST respond with ONLY valid JSON.
-Format: {"from":"e2","to":"e4","reason":"brief tactical reason"}
-NO other text. NO explanations. NO analysis. ONLY JSON.`;
-
-      // 用户提示词：具体棋局信息
-      const hints = {
-        opening: 'Control center, develop pieces, castle',
-        middlegame: 'Find tactics (forks/pins), improve pieces',
-        endgame: 'Activate king, push pawns to promote'
+      // ✅ 根据模型ID确定提示词风格
+      const promptStyles: Record<string, string> = {
+        'llama-4-scout-17b': 'structured',
+        'gemma-3-12b': 'concise',
+        'qwq-32b': 'reasoning',
+        'deepseek-32b': 'reasoning_structured'
       };
+      const promptStyle = promptStyles[modelId as keyof typeof promptStyles] || 'structured';
       
+      // 系统提示词：根据模型特点定制
+      const systemPrompt = getModelSpecificSystemPrompt(promptStyle, phase);
+      
+      // 用户提示词：棋局信息
       const userPrompt = `${model.role} playing ${colorName}.
-Move: ${gameState.moves.length + 1} (${phase})
+Move: ${gameState.moves.length + 1} (${phase.toUpperCase()})
 History: ${pgnHistory || 'game start'}
 Time: ${yourMins}:${yourSecs.toString().padStart(2,'0')}${timePressure} vs ${oppMins}:${oppSecs.toString().padStart(2,'0')}
 
-Strategy: ${hints[phase as keyof typeof hints]}
+LEGAL MOVES (choose ONE from this list):
+${moveList}${legalMoves.length > 25 ? ' +more' : ''}`;
 
-Your legal moves:
-${moveList}${legalMoves.length > 25 ? '...' : ''}
-
-Choose ONE move and return JSON:`;
-
-      console.log('📋 阶段:', phase, '角色:', model.role);
+      console.log('📋 阶段:', phase, '提示词风格:', promptStyle);
       console.log('📤 System长度:', systemPrompt.length, 'User长度:', userPrompt.length);
       console.log('📤 User提示:\n', userPrompt);
       
@@ -284,7 +338,7 @@ Choose ONE move and return JSON:`;
         const aiParams: any = {
           messages: messages,
           response_format: { type: "json_object" },
-          max_tokens: 60 // ✅ 极小token，只够一个JSON对象
+          max_tokens: promptStyle === 'reasoning' || promptStyle === 'reasoning_structured' ? 300 : 150 // 推理模型需要更多tokens
         };
         
         // 根据官方文档范围添加参数
@@ -339,64 +393,19 @@ Choose ONE move and return JSON:`;
       }
 
       console.log('AI原始响应类型:', typeof aiResponse);
-      console.log('AI响应内容:', aiResponse);
+      console.log('AI响应内容:', aiResponse.substring ? aiResponse.substring(0, 300) : aiResponse);
 
-      let moveData = null;
-      let reasonText = '';
+      // ✅ 使用模型特定的解析策略
+      const parsed = parseAIResponseByStyle(aiResponse, promptStyle);
       
-      // ✅ 检查aiResponse是对象还是字符串
-      if (typeof aiResponse === 'object' && aiResponse !== null) {
-        // 已经是对象，直接使用
-        moveData = aiResponse;
-        reasonText = moveData.reason || '';
-        console.log('✅ AI响应已是对象:', moveData);
-      } else if (typeof aiResponse === 'string') {
-        // 是字符串，尝试解析
-        try {
-          moveData = JSON.parse(aiResponse.trim());
-          reasonText = moveData.reason || '';
-          console.log('✅ JSON解析成功:', moveData);
-        } catch (e) {
-          console.log('❌ 不是纯JSON，尝试提取...');
-          
-          // 尝试从文本中提取JSON
-          const jsonMatch = aiResponse.match(/\{[^}]*"from"[^}]*"to"[^}]*\}/);
-          if (jsonMatch) {
-            try {
-              moveData = JSON.parse(jsonMatch[0]);
-              reasonText = moveData.reason || '';
-              console.log('✅ 提取JSON成功:', moveData);
-            } catch (e2) {
-              console.log('❌ 提取JSON失败');
-            }
-          }
-          
-          // 正则提取
-          if (!moveData) {
-            const fromMatch = aiResponse.match(/"from"[:\s]*"([a-h][1-8])"/i);
-            const toMatch = aiResponse.match(/"to"[:\s]*"([a-h][1-8])"/i);
-            const reasonMatch = aiResponse.match(/"reason"[:\s]*"([^"]+)"/i);
-            
-            if (fromMatch && toMatch) {
-              moveData = {
-                from: fromMatch[1].toLowerCase(),
-                to: toMatch[1].toLowerCase()
-              };
-              reasonText = reasonMatch ? reasonMatch[1] : '';
-              console.log('✅ 正则提取成功:', moveData);
-            }
-          }
-        }
-      } else {
-        console.error('❌ AI响应格式未知:', typeof aiResponse);
-      }
-
-      if (!moveData || !moveData.from || !moveData.to) {
-        console.error('无法解析AI响应，尝试下一次');
-        console.error('AI返回内容:', aiResponse.substring(0, 200));
+      if (!parsed.success || !parsed.move) {
+        console.error('❌ 解析失败，尝试下一次');
         continue;
       }
 
+      const moveData = parsed.move;
+      const reasonText = parsed.reasoning || '';
+      
       console.log('✅ AI移动解析:', moveData);
       console.log('💭 AI推理:', reasonText);
 
