@@ -117,12 +117,17 @@ export async function getAIMove(
       ];
 
       console.log('📤 发送到Workers AI, 模型:', model.modelId);
+      console.log('📤 消息数量:', messages.length);
       
-      // ✅ Workers AI正确格式：使用stream: false获取完整响应
-      const response = await env.AI.run(model.modelId, {
-        messages: messages,
-        stream: false
-      });
+      // ✅ Cloudflare Workers AI Gateway格式
+      const aiInput = {
+        prompt: messages.map(m => `${m.role}: ${m.content}`).join('\n\n'),
+        max_tokens: 100
+      };
+      
+      console.log('📤 AI输入:', JSON.stringify(aiInput).substring(0, 200));
+      
+      const response = await env.AI.run(model.modelId, aiInput);
       
       console.log('📥 Workers AI响应类型:', typeof response);
       console.log('📥 Workers AI响应keys:', Object.keys(response || {}));
