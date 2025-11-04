@@ -6,9 +6,13 @@ export const AI_MODELS = {
     name: 'Meta Llama4 17B',
     modelId: '@cf/meta/llama-4-scout-17b-16e-instruct',
     type: 'messages',
-    temperature: 0.4,
-    maxTokens: 1200,
-    role: 'Magnus Carlsen'
+    temperature: 0.3, // 降低以减少随机性
+    maxTokens: 150, // 只需要JSON，不需要长文本
+    topP: 0.9,
+    repetitionPenalty: 1.1,
+    frequencyPenalty: 0.5,
+    role: 'Magnus Carlsen',
+    supportsJsonMode: true // ✅ 支持JSON Mode
   },
   'gemma-3-12b': {
     id: 'gemma-3-12b',
@@ -16,8 +20,9 @@ export const AI_MODELS = {
     modelId: '@cf/google/gemma-3-12b-it',
     type: 'messages',
     temperature: 0.35,
-    maxTokens: 1000,
-    role: 'Garry Kasparov'
+    maxTokens: 150,
+    role: 'Garry Kasparov',
+    supportsJsonMode: true
   },
   'qwq-32b': {
     id: 'qwq-32b',
@@ -25,8 +30,9 @@ export const AI_MODELS = {
     modelId: '@cf/qwen/qwq-32b',
     type: 'messages',
     temperature: 0.3,
-    maxTokens: 1500,
-    role: 'Bobby Fischer'
+    maxTokens: 150,
+    role: 'Bobby Fischer',
+    supportsJsonMode: true
   },
   'deepseek-32b': {
     id: 'deepseek-32b',
@@ -34,8 +40,9 @@ export const AI_MODELS = {
     modelId: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
     type: 'messages',
     temperature: 0.3,
-    maxTokens: 1500,
-    role: 'Mikhail Tal'
+    maxTokens: 150,
+    role: 'Mikhail Tal',
+    supportsJsonMode: true
   }
 } as const;
 

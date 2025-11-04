@@ -266,8 +266,12 @@ Choose your move from the list above and respond in JSON format NOW:`;
         console.log('📤 调用env.AI.run...');
         response = await env.AI.run(model.modelId, {
           messages: messages,
-          max_tokens: 150, // 足够返回JSON
-          temperature: 0.3 // 降低温度，更确定性
+          response_format: { type: "json_object" }, // ✅ 强制JSON输出！
+          max_tokens: 150,
+          temperature: 0.3,
+          top_p: 0.9, // 控制创造性
+          repetition_penalty: 1.1, // 减少重复
+          frequency_penalty: 0.5 // 避免重复相同行
         });
         console.log('📥 Workers AI响应成功');
         console.log('📥 完整响应:', JSON.stringify(response, null, 2));
