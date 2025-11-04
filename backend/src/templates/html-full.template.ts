@@ -640,16 +640,18 @@ export function getFullHTMLTemplate(lang: Language): string {
         if (updateInterval) clearInterval(updateInterval);
         if (gameState.mode === 'ai-vs-ai') {
           // AI vs AI模式：需要轮询查看进展
-          updateInterval = setInterval(pollGameState, 1000);
-          console.log('AI vs AI模式，开始轮询');
+          console.log('🤖 AI vs AI模式，开始轮询');
+          updateInterval = setInterval(pollGameState, 2000); // 改为2秒轮询一次
         }
         
         console.log('游戏开始，状态:', gameState.status, '当前回合:', gameState.currentTurn);
+        console.log('完整gameState:', gameState);
         
-        // AI vs AI模式：触发第一步
-        if (gameState.mode === 'ai-vs-ai' && gameState.whitePlayer.type === 'ai') {
-          console.log('触发AI vs AI对战...');
-          setTimeout(() => pollGameState(), 500);
+        // AI vs AI模式：游戏已由backend队列启动，只需轮询即可
+        if (gameState.mode === 'ai-vs-ai') {
+          console.log('🔥 AI vs AI对战已在后台队列中运行');
+          console.log('💡 提示：队列处理需要时间，请耐心等待...');
+          console.log('每2秒检查一次更新');
         }
       } catch (error) {
         console.error('Failed to start game:', error);
@@ -889,14 +891,17 @@ export function getFullHTMLTemplate(lang: Language): string {
         }
         
         const newState = await response.json();
-        console.log('获取到新状态:', newState.currentTurn, 'FEN变化:', newState.fen !== gameState.fen);
+        console.log('获取到新状态:', newState);
+        console.log('当前回合:', newState.currentTurn, 'FEN变化:', newState.fen !== gameState.fen);
         
         if (newState && newState.fen && newState.fen !== gameState.fen) {
-          console.log('棋盘更新!');
+          console.log('🔄 棋盘更新! 从', gameState.fen, '到', newState.fen);
           gameState = newState;
           chess = new Chess(gameState.fen);
           renderBoard();
           updateGameInfo();
+        } else {
+          console.log('无变化，继续等待...');
         }
         
         // AI vs AI模式：检查是否游戏结束

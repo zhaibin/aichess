@@ -9,9 +9,12 @@ export async function handleQueue(
   batch: MessageBatch<AIGameQueueMessage>,
   env: Env
 ): Promise<void> {
+  console.log('🔄 队列收到消息，数量:', batch.messages.length);
+  
   for (const message of batch.messages) {
     try {
       const { gameId, currentPlayer } = message.body;
+      console.log('🤖 处理AI移动:', gameId, '当前玩家:', currentPlayer);
 
       // 获取游戏状态
       const id = env.GAME_STATE.idFromName(gameId);
@@ -19,30 +22,38 @@ export async function handleQueue(
       
       const response = await gameState.fetch(new Request('http://do/state'));
       const game = await response.json();
+      console.log('📋 游戏状态:', game.status, '当前回合:', game.currentTurn);
 
       if (game.status !== 'active') {
+        console.log('⚠️ 游戏未激活，跳过');
         message.ack();
         continue;
       }
 
       // 获取当前玩家
       const player = currentPlayer === 'w' ? game.whitePlayer : game.blackPlayer;
+      console.log('🎯 当前玩家:', player.type, player.name);
       
       if (player.type !== 'ai') {
+        console.log('⚠️ 当前玩家不是AI，跳过');
         message.ack();
         continue;
       }
 
       // 获取AI移动（带2秒延迟模拟思考）
+      console.log('🤔 AI思考中...');
       await new Promise(resolve => setTimeout(resolve, 2000));
       
+      console.log('🧠 调用AI生成移动...');
       const aiMove = await getAIMove(game, player.aiModel!, env);
 
       if (!aiMove) {
-        console.error('AI failed to generate move');
+        console.error('❌ AI failed to generate move');
         message.retry();
         continue;
       }
+
+      console.log('✅ AI生成移动:', aiMove);
 
       // 执行AI移动
       const moveResponse = await gameState.fetch(new Request('http://do/move', {
@@ -55,12 +66,13 @@ export async function handleQueue(
       }));
 
       if (!moveResponse.ok) {
-        console.error('Failed to execute AI move');
+        console.error('❌ Failed to execute AI move');
         message.retry();
         continue;
       }
 
       const updatedGame = await moveResponse.json();
+      console.log('🎮 移动执行成功，新状态:', updatedGame.currentTurn);
 
       // 如果仍然是AI的回合，继续发送到队列
       if (updatedGame.status === 'active') {
@@ -69,14 +81,18 @@ export async function handleQueue(
           : updatedGame.blackPlayer;
 
         if (nextPlayer.type === 'ai') {
+          console.log('🔁 下一步仍是AI，发送到队列');
           await env.AI_GAME_QUEUE.send({
             gameId,
             currentPlayer: updatedGame.currentTurn
           });
         }
+      } else {
+        console.log('🏁 游戏结束:', updatedGame.status);
       }
 
       message.ack();
+      console.log('✅ 消息处理完成');
 
     } catch (error) {
       console.error('Queue processing error:', error);
