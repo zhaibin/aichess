@@ -1344,6 +1344,9 @@ export function getFullHTMLTemplate(lang: Language): string {
       const moveStartTime = Date.now();
       const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
       
+      // ✅ 显示AI正在思考
+      showAIThinking(currentPlayer.name, 'thinking');
+      
       try {
         console.log('请求AI移动...', retryCount > 0 ? '[重试 ' + retryCount + ']' : '');
         const response = await fetch('/api/ai-move', {
@@ -1361,7 +1364,24 @@ export function getFullHTMLTemplate(lang: Language): string {
           // ✅ 扣除实际思考时间
           currentPlayer.timeRemaining = Math.max(0, currentPlayer.timeRemaining - thinkingTime);
           
-          gameState = await response.json();
+          const result = await response.json();
+          gameState = result;
+          
+          // ✅ 显示AI思考结果（如果后端返回了分析）
+          if (result.aiAnalysis) {
+            showAIThinking(
+              currentPlayer.name,
+              'completed',
+              result.aiAnalysis.phase,
+              result.aiAnalysis.reasoning,
+              result.aiAnalysis.evaluation,
+              result.aiAnalysis.confidence
+            );
+          } else {
+            // 降级为随机移动时
+            showAIThinking(currentPlayer.name, 'random');
+          }
+          
           chess = new Chess(gameState.fen);
           renderBoard();
           updateGameInfo();
@@ -1380,6 +1400,7 @@ export function getFullHTMLTemplate(lang: Language): string {
             setTimeout(() => getAIMove(retryCount + 1), 1000);
           } else {
             console.error('❌ AI移动失败次数过多');
+            hideAIThinking();
             alert('AI移动失败，请重新开始游戏');
           }
         }
@@ -1390,8 +1411,41 @@ export function getFullHTMLTemplate(lang: Language): string {
         if (retryCount < 3) {
           console.log('🔄 网络错误，1秒后重试...', retryCount + 1, '/3');
           setTimeout(() => getAIMove(retryCount + 1), 1000);
+        } else {
+          hideAIThinking();
         }
       }
+    }
+    
+    /**
+     * 显示/隐藏AI思考过程
+     */
+    function showAIThinking(playerName, status, phase, reasoning, evaluation, confidence) {
+      const thinkingBox = document.getElementById('ai-thinking');
+      if (!thinkingBox) return;
+      
+      if (status === 'thinking') {
+        thinkingBox.classList.add('show');
+        document.getElementById('ai-phase').textContent = '思考中...';
+        document.getElementById('ai-reasoning').textContent = playerName + ' 正在分析局面...';
+        document.getElementById('ai-evaluation').textContent = '-';
+        document.getElementById('ai-confidence').textContent = '-';
+      } else if (status === 'random') {
+        document.getElementById('ai-phase').textContent = '随机移动';
+        document.getElementById('ai-reasoning').textContent = '使用随机合法移动（Workers AI降级）';
+        document.getElementById('ai-evaluation').textContent = '-';
+        document.getElementById('ai-confidence').textContent = 'N/A';
+      } else if (status === 'completed') {
+        document.getElementById('ai-phase').textContent = phase || '-';
+        document.getElementById('ai-reasoning').textContent = reasoning || '移动完成';
+        document.getElementById('ai-evaluation').textContent = evaluation || '-';
+        document.getElementById('ai-confidence').textContent = confidence || '-';
+      }
+    }
+    
+    function hideAIThinking() {
+      const thinkingBox = document.getElementById('ai-thinking');
+      if (thinkingBox) thinkingBox.classList.remove('show');
     }
     
     /**
