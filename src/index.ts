@@ -31,7 +31,7 @@ export default {
       'X-XSS-Protection': '1; mode=block',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
-      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' wss: https:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';"
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' wss: https:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';"
     };
 
     // 处理OPTIONS预检请求
@@ -1633,22 +1633,8 @@ ${getSEOTags(lang)}
     }
   </script>
   
-  <!-- Chess.js库（使用可靠的jsdelivr CDN） -->
-  <script>
-    // 加载chess.js库
-    (function() {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/chess.js@1.4.0/dist/chess.min.js';
-      script.onload = function() {
-        console.log('Chess.js loaded from jsdelivr');
-      };
-      script.onerror = function() {
-        console.error('Failed to load Chess.js');
-        alert('Unable to load chess engine. Please refresh the page.');
-      };
-      document.head.appendChild(script);
-    })();
-  </script>
+  <!-- Chess.js库（使用Cloudflare CDN v0.13.4） -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
 </body>
 </html>`;
 }
