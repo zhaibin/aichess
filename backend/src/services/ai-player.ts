@@ -117,13 +117,16 @@ export async function getAIMove(
       ];
 
       console.log('📤 发送到Workers AI, 模型:', model.modelId);
+      
+      // ✅ Workers AI正确格式：使用stream: false获取完整响应
       const response = await env.AI.run(model.modelId, {
-        messages,
-        temperature: 0.7,
-        max_tokens: 100
+        messages: messages,
+        stream: false
       });
+      
       console.log('📥 Workers AI响应类型:', typeof response);
-      console.log('📥 Workers AI响应:', JSON.stringify(response).substring(0, 200));
+      console.log('📥 Workers AI响应keys:', Object.keys(response || {}));
+      console.log('📥 完整响应:', JSON.stringify(response, null, 2).substring(0, 500));
 
       // 提取响应
       let aiResponse = '';
