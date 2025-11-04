@@ -330,15 +330,23 @@ Your move (JSON only):`;
           required: ["from", "to", "reason"]
         };
         
-        response = await env.AI.run(model.modelId, {
+        // ✅ 根据官方文档构建完整参数
+        const aiParams: any = {
           messages: messages,
-          guided_json: moveSchema, // ✅ 使用guided_json而非response_format
-          max_tokens: 150,
-          temperature: model.temperature || 0.3,
-          top_p: model.topP || 0.9,
-          repetition_penalty: model.repetitionPenalty || 1.1,
-          frequency_penalty: model.frequencyPenalty || 0.5
-        });
+          guided_json: moveSchema,
+          max_tokens: 150
+        };
+        
+        // 只添加模型配置中定义的参数（避免无效参数）
+        if (model.temperature !== undefined) aiParams.temperature = model.temperature;
+        if (model.topP !== undefined) aiParams.top_p = model.topP;
+        if (model.topK !== undefined) aiParams.top_k = model.topK;
+        if (model.repetitionPenalty !== undefined) aiParams.repetition_penalty = model.repetitionPenalty;
+        if (model.frequencyPenalty !== undefined) aiParams.frequency_penalty = model.frequencyPenalty;
+        if (model.presencePenalty !== undefined) aiParams.presence_penalty = model.presencePenalty;
+        
+        console.log('📤 AI参数:', JSON.stringify(aiParams, null, 2));
+        response = await env.AI.run(model.modelId, aiParams);
         console.log('📥 Workers AI响应成功');
         console.log('📥 完整响应:', JSON.stringify(response, null, 2));
       } catch (aiError: any) {

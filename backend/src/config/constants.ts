@@ -1,13 +1,22 @@
 // 常量配置
 
-// 根据Cloudflare Workers AI文档优化的模型配置
+/**
+ * 根据Cloudflare Workers AI官方文档配置
+ * 
+ * 参考文档:
+ * - Llama 4: https://developers.cloudflare.com/workers-ai/models/llama-4-scout-17b-16e-instruct/
+ * - Gemma 3: https://developers.cloudflare.com/workers-ai/models/gemma-3-12b-it/
+ * - QwQ 32B: https://developers.cloudflare.com/workers-ai/models/qwq-32b/
+ * - Deepseek R1: https://developers.cloudflare.com/workers-ai/models/deepseek-r1-distill-qwen-32b/
+ */
 export const AI_MODELS = {
   'llama-4-scout-17b': {
     id: 'llama-4-scout-17b',
     name: 'Meta Llama4 17B',
     modelId: '@cf/meta/llama-4-scout-17b-16e-instruct',
     type: 'messages',
-    temperature: 0.15, // 文档推荐默认值
+    // Llama 4文档默认值: temperature=0.15, max_tokens=256
+    temperature: 0.15,
     maxTokens: 150,
     topP: 0.9,
     topK: 40,
@@ -15,52 +24,55 @@ export const AI_MODELS = {
     frequencyPenalty: 0.5,
     presencePenalty: 0.3,
     role: 'Magnus Carlsen',
-    supportsGuidedJson: true
+    description: '均衡型，适合通用对局'
   },
   'gemma-3-12b': {
     id: 'gemma-3-12b',
     name: 'Gemma 3 12B',
     modelId: '@cf/google/gemma-3-12b-it',
     type: 'messages',
-    temperature: 0.4, // Gemma适合稍高温度
+    // Gemma 3文档默认值: temperature=0.6, max_tokens=256
+    temperature: 0.5, // 略低于默认，保持创造性但更稳定
     maxTokens: 150,
-    topP: 0.85,
-    topK: 35,
+    topP: 0.9,
+    topK: 40,
     repetitionPenalty: 1.15,
     frequencyPenalty: 0.6,
     presencePenalty: 0.4,
     role: 'Garry Kasparov',
-    supportsGuidedJson: true
+    description: '创造型，适合复杂战术'
   },
   'qwq-32b': {
     id: 'qwq-32b',
     name: 'QwQ 32B',
     modelId: '@cf/qwen/qwq-32b',
     type: 'messages',
-    temperature: 0.25, // 推理模型,低温度
+    // QwQ是推理模型，需要低温度保证精确性
+    temperature: 0.3,
     maxTokens: 150,
-    topP: 0.8,
-    topK: 30,
+    topP: 0.85,
+    topK: 35,
     repetitionPenalty: 1.2,
     frequencyPenalty: 0.7,
     presencePenalty: 0.5,
     role: 'Bobby Fischer',
-    supportsGuidedJson: true
+    description: '推理型，深度计算'
   },
   'deepseek-32b': {
     id: 'deepseek-32b',
     name: 'Deepseek 32B',
     modelId: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
     type: 'messages',
-    temperature: 0.2, // Deepseek R1推理模型,极低温度
+    // Deepseek R1是推理模型，极低温度
+    temperature: 0.25,
     maxTokens: 150,
-    topP: 0.75,
-    topK: 25,
-    repetitionPenalty: 1.25,
-    frequencyPenalty: 0.8,
-    presencePenalty: 0.6,
+    topP: 0.8,
+    topK: 30,
+    repetitionPenalty: 1.2,
+    frequencyPenalty: 0.75,
+    presencePenalty: 0.55,
     role: 'Mikhail Tal',
-    supportsGuidedJson: true
+    description: '精确型，计算导向'
   }
 } as const;
 
