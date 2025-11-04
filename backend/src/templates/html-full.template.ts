@@ -533,7 +533,31 @@ export function getFullHTMLTemplate(lang: Language): string {
           <p id="welcome-features">${t('welcomeFeatures')}</p>
         </div>
         
-        <div id="chessboard"></div>
+        <div class="board-wrapper">
+          <div id="chessboard"></div>
+          <!-- 列坐标 (a-h) -->
+          <div class="coordinates file-coords">
+            <div class="file-coord">a</div>
+            <div class="file-coord">b</div>
+            <div class="file-coord">c</div>
+            <div class="file-coord">d</div>
+            <div class="file-coord">e</div>
+            <div class="file-coord">f</div>
+            <div class="file-coord">g</div>
+            <div class="file-coord">h</div>
+          </div>
+          <!-- 行坐标 (1-8) -->
+          <div class="coordinates rank-coords">
+            <div class="rank-coord">1</div>
+            <div class="rank-coord">2</div>
+            <div class="rank-coord">3</div>
+            <div class="rank-coord">4</div>
+            <div class="rank-coord">5</div>
+            <div class="rank-coord">6</div>
+            <div class="rank-coord">7</div>
+            <div class="rank-coord">8</div>
+          </div>
+        </div>
       </div>
       
       <div class="info-panel">
