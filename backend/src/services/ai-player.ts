@@ -213,11 +213,22 @@ export async function getAIMove(
       
       // ✅ 使用模型配置的参数
       let response;
-      response = await env.AI.run(model.modelId, {
-        messages: messages,
-        temperature: model.temperature,
-        max_tokens: model.maxTokens
-      });
+      
+      try {
+        console.log('📤 调用env.AI.run...');
+        response = await env.AI.run(model.modelId, {
+          messages: messages,
+          temperature: model.temperature,
+          max_tokens: model.maxTokens
+        });
+        console.log('📥 Workers AI响应成功');
+      } catch (aiError: any) {
+        console.error('❌ Workers AI调用异常:', aiError);
+        console.error('错误消息:', aiError?.message);
+        console.error('错误代码:', aiError?.code);
+        console.error('错误详情:', JSON.stringify(aiError, null, 2));
+        throw aiError; // 重新抛出，让外层重试
+      }
       
       console.log('📥 Workers AI响应类型:', typeof response);
       console.log('📥 Workers AI响应keys:', Object.keys(response || {}));

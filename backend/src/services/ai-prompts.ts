@@ -14,29 +14,14 @@ export function getGamePhase(moveCount: number): 'opening' | 'middlegame' | 'end
  * 生成全局系统提示词（大师级）
  */
 export function getGrandmasterSystemPrompt(role: string): string {
-  return `You are ${role}, a professional chess Grandmaster (2800+ ELO).
+  return `You are ${role}, a chess Grandmaster.
 
-**YOUR CAPABILITIES:**
-- Deep tactical calculation (10+ moves ahead)
-- Strategic understanding across all game phases
-- Opening theory knowledge
-- Endgame technique mastery
-- Pattern recognition and evaluation
+Play strong, tactical chess. Always respond with:
+**SELECTED MOVE:** [move in algebraic notation like e4, Nf3, O-O]
+**PRIMARY REASON:** [brief reason]
+**CONFIDENCE:** High/Medium/Low
 
-**YOUR PLAYING STYLE:**
-- Objective and precise
-- Sound positional play
-- Sharp tactical awareness
-- Practical and flexible
-- Adapt to position requirements
-
-**CRITICAL RESPONSE FORMAT:**
-You MUST clearly mark your chosen move like this:
-**SELECTED MOVE:** Nf3
-or
-**BEST MOVE:** e4
-
-You must provide clear reasoning with your move.`;
+Be concise and decisive.`;
 }
 
 /**
@@ -80,77 +65,40 @@ function getPhaseGuidance(phase: string): string {
  */
 export function getStructuredUserPrompt(gameState: GameState, role: string): string {
   const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
-  const opponent = gameState.currentTurn === 'w' ? gameState.blackPlayer : gameState.whitePlayer;
   
-  // PGN历史
-  let pgnHistory: string[] = [];
+  // 简化历史（最多最近5步）
+  let recentMoves = '';
   if (gameState.moves.length > 0) {
-    for (let i = 0; i < gameState.moves.length; i++) {
+    const start = Math.max(0, gameState.moves.length - 5);
+    for (let i = start; i < gameState.moves.length; i++) {
       const move = gameState.moves[i];
-      const player = i % 2 === 0 ? 'White' : 'Black';
-      pgnHistory.push(`${i + 1}. ${player}: ${move.from}→${move.to}${move.promotion ? '=' + move.promotion.toUpperCase() : ''}`);
+      recentMoves += `${i + 1}. ${move.from}→${move.to} `;
     }
   }
   
   const phase = getGamePhase(gameState.moves.length);
   const colorName = currentPlayer.color === 'w' ? 'White' : 'Black';
   
-  return `**CHESS POSITION ANALYSIS - Move ${gameState.moves.length + 1}**
+  // ✅ 大幅简化提示词，减少token消耗
+  return `Position (FEN): ${gameState.fen}
 
-**Current Position (FEN):**
-${gameState.fen}
+Your Color: ${colorName}
+Phase: ${phase.toUpperCase()}
+Recent Moves: ${recentMoves || 'Game start'}
 
-**Game History:**
-${pgnHistory.length > 0 ? pgnHistory.join('\n') : 'Game start - Opening position'}
+${phase === 'opening' ? 'Opening: Control center (e4/d4), develop pieces, castle early.' : ''}
+${phase === 'middlegame' ? 'Middlegame: Find tactics, improve pieces, create threats.' : ''}
+${phase === 'endgame' ? 'Endgame: Activate king, push pawns, precise calculation.' : ''}
 
-**Your Color:** ${colorName}
-**Game Phase:** ${phase.toUpperCase()}
+Your task:
+1. Analyze position quickly
+2. Find best move
+3. Return in format: **SELECTED MOVE:** e4
 
-${getPhaseGuidance(phase)}
-
----
-
-**ANALYSIS INSTRUCTIONS:**
-
-Follow this structured approach to find the best move:
-
-**STEP 1: POSITION ASSESSMENT**
-Quickly evaluate:
-- Material: [Count pieces, who has advantage?]
-- King Safety: [Scale 1-5 for both sides, 5=very safe]
-- Piece Activity: [Which pieces are active/passive?]
-- Pawn Structure: [Any weaknesses or strengths?]
-- Overall: [Better/Equal/Worse and why]
-
-**STEP 2: IDENTIFY KEY FEATURES**
-- Immediate threats: [Any pieces under attack? Checks available?]
-- Tactical motifs: [Pins, forks, skewers?]
-- Strategic goals: [What should the plan be?]
-
-**STEP 3: GENERATE CANDIDATES**
-List 2-3 candidate moves:
-
-**Candidate 1:** [Move like Nf3 or e4]
-Purpose: [What this accomplishes]
-Pros: [Strengths]
-Cons: [Weaknesses]
-
-**Candidate 2:** [Move]
-Purpose: [...]
-Pros: [...]
-Cons: [...]
-
-**STEP 4: FINAL DECISION**
-
-**SELECTED MOVE:** [Your choice - e.g., Nf3, e4, O-O]
-
-**PRIMARY REASON:** [Why this is best]
-
-**CONFIDENCE:** [High/Medium/Low]
-
----
-
-**CRITICAL:** You MUST include "**SELECTED MOVE:**" or "**BEST MOVE:**" followed by your move in standard algebraic notation (e.g., Nf3, e4, Bxf7, O-O).`;
+You MUST respond with:
+**SELECTED MOVE:** [your move]
+**PRIMARY REASON:** [one sentence why]
+**CONFIDENCE:** High/Medium/Low`;
 }
 
 /**
