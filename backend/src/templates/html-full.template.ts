@@ -740,7 +740,7 @@ export function getFullHTMLTemplate(lang: Language): string {
       }
     }
     
-    function handleSquareClick(square) {
+    async function handleSquareClick(square) {
       const squareName = square.dataset.square;
       console.log('点击方格:', squareName, 'gameState:', gameState ? gameState.status : 'null');
       
