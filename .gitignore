@@ -1,8 +1,9 @@
 node_modules
-.wrangler
-.dev.vars
 dist
-.env
 *.log
 .DS_Store
-
+.wrangler
+.dev.vars
+*.legacy
+src.legacy
+package-lock.json
