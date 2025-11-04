@@ -679,10 +679,15 @@ export function getFullHTMLTemplate(lang: Language): string {
         for (let col = 0; col < 8; col++) {
           const square = document.createElement('div');
           square.className = 'square ' + ((row + col) % 2 === 0 ? 'light' : 'dark');
-          square.dataset.square = String.fromCharCode(97 + col) + (row + 1);
           
-          // 修复：row直接对应board数组索引
-          const piece = squares[row][col];
+          // 正确的映射：页面从上到下是rank 8到1
+          const rank = 8 - row;  // row=0 → rank=8, row=7 → rank=1
+          const file = String.fromCharCode(97 + col);  // col=0 → 'a'
+          square.dataset.square = file + rank;
+          
+          // board数组：index 7=rank8, index 0=rank1
+          const boardRow = rank - 1;  // rank=8 → index=7, rank=1 → index=0
+          const piece = squares[boardRow][col];
           if (piece) {
             const symbols = {
               'wp': '♙', 'wn': '♘', 'wb': '♗', 'wr': '♖', 'wq': '♕', 'wk': '♔',
