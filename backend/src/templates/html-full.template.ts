@@ -681,7 +681,8 @@ export function getFullHTMLTemplate(lang: Language): string {
           square.className = 'square ' + ((row + col) % 2 === 0 ? 'light' : 'dark');
           square.dataset.square = String.fromCharCode(97 + col) + (row + 1);
           
-          const piece = squares[7 - row][col];
+          // 修复：row直接对应board数组索引
+          const piece = squares[row][col];
           if (piece) {
             const symbols = {
               'wp': '♙', 'wn': '♘', 'wb': '♗', 'wr': '♖', 'wq': '♕', 'wk': '♔',
