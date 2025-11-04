@@ -1154,12 +1154,6 @@ ${getSEOTags(lang)}
     // 初始化
     async function init() {
       // 确保Chess库已加载
-        "ai": "AI",
-        "selectAI": "选择AI",
-        "startGame": "开始游戏",
-        "moveHistory": "行棋历史",
-        "currentTurn": "当前回合",
-        "timeRemaining": "剩余时间",
         "gameOver": "游戏结束",
         "whiteWins": "白方获胜",
         "blackWins": "黑方获胜",
@@ -1565,7 +1559,6 @@ ${getSEOTags(lang)}
         "check": "체크",
         "stalemate": "스테일메이트",
         "timeout": "시간 초과",
-        "gameHistory": "게임 기록",
       if (typeof Chess === 'undefined') {
         console.error('Chess.js not loaded yet');
         setTimeout(init, 100);
