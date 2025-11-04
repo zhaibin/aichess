@@ -125,6 +125,35 @@ GET /api/game-state?gameId=xxx
 
 aichess.win
 
+## 自动化工作流程
+
+### 日常开发
+```bash
+# 修改代码后自动提交并部署
+npm run auto-deploy "提交: 描述信息"
+
+# 本地测试
+npm run dev
+
+# 查看日志
+npm run tail
+```
+
+### 提交规范
+- `功能: 描述` - 新功能
+- `修复: 描述` - Bug修复
+- `优化: 描述` - 性能优化
+- `样式: 描述` - UI调整
+- `文档: 描述` - 文档更新
+
+### 重大变更推送GitHub
+需手动确认后执行：
+```bash
+git push origin main
+```
+
+详见 `.cursorrules` 文件
+
 ## 许可
 
 MIT License
