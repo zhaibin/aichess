@@ -247,26 +247,6 @@ export function getFullHTMLTemplate(lang: Language): string {
     
     @media (max-width: 768px) {
       .square { font-size: 2.5em; }
-      
-      .site-header {
-        flex-direction: column;
-        gap: 15px;
-      }
-      
-      .logo-text h1 {
-        font-size: 1.5em;
-      }
-      
-      .top-nav {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
-      }
-      
-      .top-nav a {
-        font-size: 0.9em;
-        padding: 6px 12px;
-      }
     }
     
     /* 信息面板 */
@@ -477,31 +457,61 @@ export function getFullHTMLTemplate(lang: Language): string {
       text-align: center;
       color: white;
       margin-top: 40px;
-      padding: 30px 20px;
+      padding: 40px 20px;
       background: rgba(0, 0, 0, 0.2);
       border-radius: 12px;
     }
     
+    .footer-logo {
+      margin-bottom: 20px;
+    }
+    
+    .footer-logo .logo-icon {
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+    }
+    
     footer h2 {
       font-size: 2em;
-      margin-bottom: 15px;
+      margin: 15px 0;
+    }
+    
+    footer p {
+      margin: 10px 0;
+      opacity: 0.9;
     }
     
     .footer-links {
-      margin-top: 20px;
-      font-size: 0.9em;
+      margin: 25px 0;
+      font-size: 1em;
     }
     
     .footer-links a {
       color: white;
       text-decoration: none;
-      margin: 0 15px;
-      opacity: 0.8;
+      margin: 0 12px;
+      opacity: 0.9;
+      transition: opacity 0.3s;
+      font-weight: 500;
     }
     
     .footer-links a:hover {
       opacity: 1;
       text-decoration: underline;
+    }
+    
+    .footer-links span {
+      opacity: 0.6;
+      margin: 0 5px;
+    }
+    
+    .copyright {
+      margin-top: 20px;
+      opacity: 0.8;
+      font-size: 0.9em;
+    }
+    
+    .copyright p {
+      margin: 5px 0;
     }
     
     .hidden { display: none !important; }
@@ -685,41 +695,6 @@ export function getFullHTMLTemplate(lang: Language): string {
   </div>
   
   <div class="container">
-    <!-- 顶部Logo和导航 -->
-    <header class="site-header">
-      <div class="logo-section">
-        <svg class="logo-icon" viewBox="0 0 64 64" width="48" height="48">
-          <defs>
-            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-              <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
-            </linearGradient>
-          </defs>
-          <rect x="8" y="8" width="48" height="48" fill="url(#logoGrad)" rx="4"/>
-          <rect x="8" y="8" width="12" height="12" fill="#fff" opacity="0.3"/>
-          <rect x="32" y="8" width="12" height="12" fill="#fff" opacity="0.3"/>
-          <rect x="20" y="20" width="12" height="12" fill="#fff" opacity="0.3"/>
-          <rect x="44" y="20" width="12" height="12" fill="#fff" opacity="0.3"/>
-          <rect x="8" y="32" width="12" height="12" fill="#fff" opacity="0.3"/>
-          <rect x="32" y="32" width="12" height="12" fill="#fff" opacity="0.3"/>
-          <rect x="20" y="44" width="12" height="12" fill="#fff" opacity="0.3"/>
-          <rect x="44" y="44" width="12" height="12" fill="#fff" opacity="0.3"/>
-          <circle cx="32" cy="32" r="16" fill="#FFD700" opacity="0.9"/>
-          <text x="32" y="38" font-size="20" font-weight="bold" text-anchor="middle" fill="#333">AI</text>
-        </svg>
-        <div class="logo-text">
-          <h1>AIChess</h1>
-          <p class="tagline">Intelligent Chess Platform</p>
-        </div>
-      </div>
-      <nav class="top-nav">
-        <a href="/about?lang=${lang}" target="_blank" id="about-link-top">${t('about')}</a>
-        <a href="/privacy?lang=${lang}" target="_blank" id="privacy-link-top">${t('privacy')}</a>
-        <a href="/terms?lang=${lang}" target="_blank" id="terms-link-top">${t('terms')}</a>
-      </nav>
-    </header>
-    
-    <div class="main-content">
     <!-- 游戏设置侧边栏 -->
     <div class="game-setup-sidebar" id="game-setup">
       <button class="close-setup" onclick="closeGameSetup()">×</button>
@@ -840,12 +815,33 @@ export function getFullHTMLTemplate(lang: Language): string {
       </div>
     </div>
     
-    </div> <!-- main-content -->
-    
     <!-- Footer -->
     <footer>
-      <h2>AIChess - Intelligent Chess Platform</h2>
-      <p>Challenge 5 powerful AI chess players on a completely free online chess platform</p>
+      <!-- Logo -->
+      <div class="footer-logo">
+        <svg class="logo-icon" viewBox="0 0 64 64" width="64" height="64">
+          <defs>
+            <linearGradient id="footerLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <rect x="8" y="8" width="48" height="48" fill="url(#footerLogoGrad)" rx="4"/>
+          <rect x="8" y="8" width="12" height="12" fill="#fff" opacity="0.4"/>
+          <rect x="32" y="8" width="12" height="12" fill="#fff" opacity="0.4"/>
+          <rect x="20" y="20" width="12" height="12" fill="#fff" opacity="0.4"/>
+          <rect x="44" y="20" width="12" height="12" fill="#fff" opacity="0.4"/>
+          <rect x="8" y="32" width="12" height="12" fill="#fff" opacity="0.4"/>
+          <rect x="32" y="32" width="12" height="12" fill="#fff" opacity="0.4"/>
+          <rect x="20" y="44" width="12" height="12" fill="#fff" opacity="0.4"/>
+          <rect x="44" y="44" width="12" height="12" fill="#fff" opacity="0.4"/>
+          <circle cx="32" cy="32" r="16" fill="#fff" opacity="0.9"/>
+          <text x="32" y="38" font-size="20" font-weight="bold" text-anchor="middle" fill="#764ba2">AI</text>
+        </svg>
+      </div>
+      
+      <h2>AIChess.win</h2>
+      <p>Challenge 5 powerful AI chess players | Completely free online chess platform</p>
       <p>🤖 5 AI Models | 💯 Forever Free | 🌍 11 Languages | ⚡ Global CDN</p>
       
       <div class="footer-links">
@@ -935,10 +931,7 @@ export function getFullHTMLTemplate(lang: Language): string {
       safeUpdate('ai-evaluation-label', t('aiEvaluation') + ':');
       safeUpdate('ai-confidence-label', t('aiConfidence') + ':');
       
-      // 更新顶部和底部链接
-      safeUpdate('about-link-top', t('about'));
-      safeUpdate('terms-link-top', t('terms'));
-      safeUpdate('privacy-link-top', t('privacy'));
+      // 更新Footer链接
       safeUpdate('footer-about', t('about'));
       safeUpdate('footer-privacy', t('privacy'));
       safeUpdate('footer-terms', t('terms'));
