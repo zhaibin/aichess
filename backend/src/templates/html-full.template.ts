@@ -454,9 +454,62 @@ export function getFullHTMLTemplate(lang: Language): string {
     }
     
     .hidden { display: none !important; }
+    
+    /* 升变选择对话框 */
+    .promotion-dialog {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+      z-index: 3000;
+      display: none;
+    }
+    
+    .promotion-dialog.show { display: block; }
+    
+    .promotion-dialog h3 {
+      margin-bottom: 20px;
+      color: #333;
+      text-align: center;
+    }
+    
+    .promotion-options {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+    
+    .promotion-piece {
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3em;
+      background: #f0f0f0;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .promotion-piece:hover {
+      background: #e0e0e0;
+      border-color: #2196f3;
+      transform: scale(1.1);
+    }
   </style>
 </head>
 <body>
+  <!-- 升变选择对话框 -->
+  <div class="promotion-dialog" id="promotion-dialog">
+    <h3 id="promotion-title">选择升变棋子</h3>
+    <div class="promotion-options" id="promotion-options"></div>
+  </div>
   <!-- 新游戏按钮 -->
   <button class="new-game-btn" onclick="openGameSetup()">
     <span id="new-game-btn-text">${t('newGame')}</span>
@@ -977,19 +1030,81 @@ export function getFullHTMLTemplate(lang: Language): string {
       });
     }
     
-    async function makeMove(from, to) {
+    /**
+     * 显示升变选择对话框
+     */
+    function showPromotionDialog(color) {
+      return new Promise((resolve) => {
+        const dialog = document.getElementById('promotion-dialog');
+        const options = document.getElementById('promotion-options');
+        const title = document.getElementById('promotion-title');
+        
+        title.textContent = t('selectPromotionPiece') || '选择升变棋子';
+        
+        const pieces = [
+          { type: 'q', symbol: color === 'w' ? '♕' : '♛', name: t('queen') || '后' },
+          { type: 'r', symbol: color === 'w' ? '♖' : '♜', name: t('rook') || '车' },
+          { type: 'b', symbol: color === 'w' ? '♗' : '♝', name: t('bishop') || '象' },
+          { type: 'n', symbol: color === 'w' ? '♘' : '♞', name: t('knight') || '马' }
+        ];
+        
+        options.innerHTML = '';
+        pieces.forEach(piece => {
+          const btn = document.createElement('div');
+          btn.className = 'promotion-piece';
+          btn.textContent = piece.symbol;
+          btn.title = piece.name;
+          btn.onclick = () => {
+            dialog.classList.remove('show');
+            resolve(piece.type);
+          };
+          options.appendChild(btn);
+        });
+        
+        dialog.classList.add('show');
+        
+        // ESC键取消
+        const escHandler = (e) => {
+          if (e.key === 'Escape') {
+            dialog.classList.remove('show');
+            document.removeEventListener('keydown', escHandler);
+            resolve(null);
+          }
+        };
+        document.addEventListener('keydown', escHandler);
+      });
+    }
+    
+    async function makeMove(from, to, promotion) {
       if (!gameState || !gameState.id) {
         console.error('游戏未开始，无法调用API');
         return;
       }
       
+      // 检查是否需要升变
+      if (!promotion) {
+        const piece = chess.get(from);
+        const toSquare = chess.parseSquare ? chess.parseSquare(to) : { rank: parseInt(to[1]) - 1 };
+        const toRank = toSquare.rank !== undefined ? toSquare.rank : parseInt(to[1]) - 1;
+        
+        if (piece && piece.type === 'p' && (toRank === 7 || toRank === 0)) {
+          console.log('🎯 兵到达底线，需要升变');
+          promotion = await showPromotionDialog(piece.color);
+          if (!promotion) {
+            console.log('❌ 取消升变');
+            return;
+          }
+          console.log('✅ 选择升变:', promotion);
+        }
+      }
+      
       try {
-        console.log('执行移动:', { gameId: gameState.id, from, to });
+        console.log('执行移动:', { gameId: gameState.id, from, to, promotion });
         
         const response = await fetch('/api/make-move', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ gameId: gameState.id, from, to })
+          body: JSON.stringify({ gameId: gameState.id, from, to, promotion })
         });
         
         if (response.ok) {

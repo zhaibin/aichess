@@ -88,33 +88,42 @@ export async function getAIMove(
 ): Promise<{ from: string; to: string; promotion?: string } | null> {
   console.log('🎮 getAIMove被调用, 模型:', aiModel);
   
+  // 检查env.AI是否存在
+  if (!env || !env.AI) {
+    console.error('❌ Workers AI未绑定！env.AI不存在');
+    console.error('环境变量:', Object.keys(env || {}));
+    throw new Error('Workers AI binding not found. Please check wrangler.toml configuration.');
+  }
+  
   const model = AI_MODELS[aiModel];
   if (!model) {
     console.error('❌ 无效的AI模型:', aiModel);
     console.log('可用模型:', Object.keys(AI_MODELS));
-    // 使用随机移动作为降级
-    console.log('⚠️ 使用随机移动作为降级');
-    return getRandomLegalMove(gameState);
+    throw new Error(`Invalid AI model: ${aiModel}. Available models: ${Object.keys(AI_MODELS).join(', ')}`);
   }
+
+  console.log('✅ AI绑定检查通过');
+  console.log('📋 使用模型:', model.name, '(' + model.modelId + ')');
 
   const maxRetries = 3;
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      console.log(`🤖 AI调用 (尝试 ${attempt + 1}/${maxRetries}):`, model.name, model.modelId);
+      console.log(`🤖 AI调用 (尝试 ${attempt + 1}/${maxRetries})`);
       
       const messages = [
         { role: 'system', content: getSystemPrompt() },
         { role: 'user', content: getUserPrompt(gameState) }
       ];
 
-      console.log('📤 发送到Workers AI...');
+      console.log('📤 发送到Workers AI, 模型:', model.modelId);
       const response = await env.AI.run(model.modelId, {
         messages,
         temperature: 0.7,
         max_tokens: 100
       });
-      console.log('📥 Workers AI响应:', response);
+      console.log('📥 Workers AI响应类型:', typeof response);
+      console.log('📥 Workers AI响应:', JSON.stringify(response).substring(0, 200));
 
       // 提取响应
       let aiResponse = '';
@@ -178,15 +187,20 @@ export async function getAIMove(
       }
 
     } catch (error) {
-      console.error(`❌ AI调用失败 (尝试 ${attempt + 1}):`, error);
+      console.error(`❌ AI调用失败 (尝试 ${attempt + 1}/${maxRetries}):`, error);
+      console.error('错误类型:', error?.constructor?.name);
       console.error('错误详情:', error instanceof Error ? error.message : String(error));
       console.error('错误堆栈:', error instanceof Error ? error.stack : '无堆栈');
+      
+      // 最后一次尝试才抛出错误
+      if (attempt === maxRetries - 1) {
+        throw new Error(`Workers AI调用失败 (${maxRetries}次尝试): ${error instanceof Error ? error.message : String(error)}`);
+      }
     }
   }
 
-  // 所有重试失败，返回随机合法移动
-  console.log('⚠️ AI所有尝试失败，使用随机合法移动');
-  return getRandomLegalMove(gameState);
+  // 不应该到这里
+  throw new Error('AI调用逻辑错误');
 }
 
 /**
