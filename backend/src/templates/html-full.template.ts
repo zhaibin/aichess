@@ -247,6 +247,26 @@ export function getFullHTMLTemplate(lang: Language): string {
     
     @media (max-width: 768px) {
       .square { font-size: 2.5em; }
+      
+      .site-header {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .logo-text h1 {
+        font-size: 1.5em;
+      }
+      
+      .top-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+      }
+      
+      .top-nav a {
+        font-size: 0.9em;
+        padding: 6px 12px;
+      }
     }
     
     /* 信息面板 */
@@ -785,6 +805,8 @@ export function getFullHTMLTemplate(lang: Language): string {
       </div>
     </div>
     
+    </div> <!-- main-content -->
+    
     <!-- Footer -->
     <footer>
       <h2>AIChess - Intelligent Chess Platform</h2>
@@ -792,17 +814,19 @@ export function getFullHTMLTemplate(lang: Language): string {
       <p>🤖 5 AI Models | 💯 Forever Free | 🌍 11 Languages | ⚡ Global CDN</p>
       
       <div class="footer-links">
+        <a href="/about?lang=${lang}" target="_blank" id="footer-about">${t('about')}</a>
+        <span>|</span>
+        <a href="/privacy?lang=${lang}" target="_blank" id="footer-privacy">${t('privacy')}</a>
+        <span>|</span>
+        <a href="/terms?lang=${lang}" target="_blank" id="footer-terms">${t('terms')}</a>
+        <span>|</span>
         <a href="https://github.com/aichess/aichess" target="_blank" rel="noopener">GitHub</a>
         <span>|</span>
-        <a href="#" onclick="openPrivacyPolicy(); return false;">Privacy Policy</a>
-        <span>|</span>
-        <a href="#" onclick="openTerms(); return false;">Terms of Service</a>
-        <span>|</span>
-        <a href="mailto:contact@aichess.win">Contact Us</a>
+        <a href="mailto:contact@aichess.win">Contact</a>
       </div>
       
       <div class="copyright">
-        <p>© 2025 AIChess.win. All Rights Reserved.</p>
+        <p>© 2024-2025 AIChess.win. All Rights Reserved.</p>
         <p>Open Source under MIT License | Powered by Cloudflare Workers & AI</p>
       </div>
     </footer>
@@ -875,6 +899,14 @@ export function getFullHTMLTemplate(lang: Language): string {
       safeUpdate('ai-reasoning-label', t('aiReasoning') + ':');
       safeUpdate('ai-evaluation-label', t('aiEvaluation') + ':');
       safeUpdate('ai-confidence-label', t('aiConfidence') + ':');
+      
+      // 更新顶部和底部链接
+      safeUpdate('about-link-top', t('about'));
+      safeUpdate('terms-link-top', t('terms'));
+      safeUpdate('privacy-link-top', t('privacy'));
+      safeUpdate('footer-about', t('about'));
+      safeUpdate('footer-privacy', t('privacy'));
+      safeUpdate('footer-terms', t('terms'));
       
       const gameModeSelect = document.getElementById('game-mode');
       if (gameModeSelect && gameModeSelect.options.length >= 3) {
