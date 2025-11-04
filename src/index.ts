@@ -1150,7 +1150,8 @@ ${getSEOTags(lang)}
     
     // 翻译函数
     const t = (key) => translations[currentLanguage]?.[key] || translations['en'][key] || key;
-      "zh-CN": {
+
+    // 初始化
         "appName": "AI国际象棋",
         "newGame": "新游戏",
         "humanVsHuman": "人人对战",
@@ -1577,11 +1578,6 @@ ${getSEOTags(lang)}
         "gameHistory": "게임 기록",
         "replay": "다시보기",
         "continue": "계속하기",
-        "language": "언어"
-      }
-    };
-
-    // 初始化
     async function init() {
       // 确保Chess库已加载
       if (typeof Chess === 'undefined') {
@@ -2062,7 +2058,7 @@ ${getSEOTags(lang)}
   </script>
   
   <!-- Chess.js库（最后加载） -->
-  <script src="https://unpkg.com/chess.js@0.10.3/chess.min.js"></script>
+  <script src="https://unpkg.com/chess.js@1.4.0/chess.min.js"></script>
 </body>
 </html>`;
 }
