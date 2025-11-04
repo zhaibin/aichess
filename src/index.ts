@@ -31,7 +31,7 @@ export default {
       'X-XSS-Protection': '1; mode=block',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
-      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' wss: https:; font-src 'self' https://cdnjs.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self';"
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' wss: https:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';"
     };
 
     // 处理OPTIONS预检请求
@@ -1129,7 +1129,6 @@ ${getSEOTags(lang)}
     </footer>
   </div>
 
-  <script src="https://unpkg.com/chess.js@0.10.3/chess.min.js" onload="onChessLibLoaded()" onerror="onChessLibError()"></script>
   <script>
     // 全局变量
     let gameState = null;
@@ -1581,24 +1580,6 @@ ${getSEOTags(lang)}
         "language": "언어"
       }
     };
-
-    // Chess.js库加载完成回调
-    function onChessLibLoaded() {
-      console.log('Chess.js loaded successfully');
-      chessLibLoaded = true;
-      // 库加载后才初始化
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-      } else {
-        init();
-      }
-    }
-
-    // Chess.js库加载失败回调
-    function onChessLibError() {
-      console.error('Failed to load Chess.js from CDN');
-      alert('无法加载象棋引擎，请刷新页面重试');
-    }
 
     // 初始化
     async function init() {
@@ -2063,9 +2044,25 @@ ${getSEOTags(lang)}
       alert('Terms of Service\\n\\n1. Free Service: All features are provided free of charge\\n2. Game Rules: Must follow FIDE international chess rules\\n3. Fair Play: Cheating and abuse are strictly prohibited\\n4. As-Is Service: Service provided without warranties\\n5. Modifications: We reserve the right to modify the service\\n6. Account: Optional user accounts for rating tracking\\n7. Content: All game data belongs to you\\n8. Termination: We may suspend accounts for violations');
     }
 
-    // Chess.js会在加载完成后自动调用onChessLibLoaded()
-    // 不需要在这里调用init()
+    // 页面加载完成后初始化（不依赖外部库）
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', waitForChess);
+    } else {
+      waitForChess();
+    }
+
+    // 等待Chess.js加载
+    function waitForChess() {
+      if (typeof Chess !== 'undefined') {
+        init();
+      } else {
+        setTimeout(waitForChess, 100);
+      }
+    }
   </script>
+  
+  <!-- Chess.js库（最后加载） -->
+  <script src="https://unpkg.com/chess.js@0.10.3/chess.min.js"></script>
 </body>
 </html>`;
 }
