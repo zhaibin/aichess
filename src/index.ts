@@ -565,21 +565,50 @@ ${getSEOTags(lang)}
       padding: 20px;
     }
 
-    header {
+    footer {
       text-align: center;
       color: white;
-      margin-bottom: 30px;
+      margin-top: 40px;
+      padding: 30px 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
     }
 
-    h1 {
-      font-size: 2.5em;
-      margin-bottom: 10px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    footer h2 {
+      font-size: 2em;
+      margin-bottom: 15px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
 
-    .tagline {
-      font-size: 1.1em;
+    footer p {
+      font-size: 1em;
       opacity: 0.9;
+      margin: 10px 0;
+      line-height: 1.6;
+    }
+
+    .footer-links {
+      margin-top: 20px;
+      font-size: 0.9em;
+    }
+
+    .footer-links a {
+      color: white;
+      text-decoration: none;
+      margin: 0 15px;
+      opacity: 0.8;
+      transition: opacity 0.3s;
+    }
+
+    .footer-links a:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+
+    .copyright {
+      margin-top: 20px;
+      font-size: 0.85em;
+      opacity: 0.7;
     }
 
     .game-setup-sidebar {
@@ -650,25 +679,36 @@ ${getSEOTags(lang)}
 
     #chessboard {
       width: 100%;
-      max-width: 600px;
+      max-width: 800px;
       aspect-ratio: 1;
       margin: 0 auto;
       display: grid;
       grid-template-columns: repeat(8, 1fr);
       grid-template-rows: repeat(8, 1fr);
-      border: 2px solid #333;
+      border: 3px solid #333;
       border-radius: 8px;
       overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     }
 
     .square {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.5em;
+      font-size: 3.5em;
       cursor: pointer;
       transition: all 0.2s;
       user-select: none;
+    }
+
+    @media (max-width: 768px) {
+      .square {
+        font-size: 2.5em;
+      }
+      
+      #chessboard {
+        max-width: 100%;
+      }
     }
 
     .square.light {
@@ -992,11 +1032,6 @@ ${getSEOTags(lang)}
   </div>
 
   <div class="container">
-    <header>
-      <h1 id="app-name">AI国际象棋</h1>
-      <p class="tagline">aichess.win</p>
-    </header>
-
     <!-- 游戏设置（侧边栏） -->
     <div class="game-setup-sidebar" id="game-setup">
       <button class="close-setup" onclick="closeGameSetup()">×</button>
@@ -1069,6 +1104,28 @@ ${getSEOTags(lang)}
         </div>
       </div>
     </div>
+
+    <!-- Footer -->
+    <footer>
+      <h2 id="footer-title">AIChess - 智能国际象棋平台</h2>
+      <p id="footer-description">挑战5种强大AI棋手，完全免费的在线国际象棋对战平台</p>
+      <p id="footer-features">🤖 5种AI模型 | 💯 永久免费 | 🌍 支持11种语言 | ⚡ 全球CDN加速</p>
+      
+      <div class="footer-links">
+        <a href="https://github.com/aichess/aichess" target="_blank" rel="noopener" id="footer-github">GitHub</a>
+        <span>|</span>
+        <a href="#" onclick="openPrivacyPolicy(); return false;" id="footer-privacy">隐私政策</a>
+        <span>|</span>
+        <a href="#" onclick="openTerms(); return false;" id="footer-terms">服务条款</a>
+        <span>|</span>
+        <a href="mailto:contact@aichess.win" id="footer-contact">联系我们</a>
+      </div>
+      
+      <div class="copyright">
+        <p id="footer-copyright">© 2025 AIChess.win. All Rights Reserved.</p>
+        <p id="footer-license">基于MIT许可证开源 | Powered by Cloudflare Workers & AI</p>
+      </div>
+    </footer>
   </div>
 
   <script src="https://unpkg.com/chess.js@0.10.3/chess.min.js" onload="onChessLibLoaded()" onerror="onChessLibError()"></script>
@@ -1555,9 +1612,15 @@ ${getSEOTags(lang)}
       updateLanguage();
       
       document.getElementById('language-select').addEventListener('change', (e) => {
-        const newLang = e.target.value;
-        // 更新URL参数并刷新页面以获得正确的SEO
-        window.location.href = '/?lang=' + newLang;
+        currentLanguage = e.target.value;
+        
+        // 立即更新界面语言
+        updateLanguage();
+        
+        // 同时更新URL参数（用于SEO，但不刷新页面）
+        const url = new URL(window.location.href);
+        url.searchParams.set('lang', currentLanguage);
+        window.history.replaceState({}, '', url);
       });
       
       document.getElementById('game-mode').addEventListener('change', updateAISelectors);
@@ -1677,6 +1740,9 @@ ${getSEOTags(lang)}
         'ko': '🤖 5개 AI | 💯 무료 | 🌍 11개 언어'
       };
       document.getElementById('welcome-features').textContent = featureTexts[currentLanguage] || featureTexts['en'];
+      
+      // 更新Footer
+      updateFooter();
       
       // 更新游戏模式选项
       const gameModeSelect = document.getElementById('game-mode');
@@ -2012,6 +2078,135 @@ ${getSEOTags(lang)}
         // TODO: 实现认输API
         alert('Resign feature coming soon');
       }
+    }
+
+    // 更新Footer多语言
+    function updateFooter() {
+      const t = (key) => translations[currentLanguage][key] || key;
+      
+      const footerTitles = {
+        'zh-CN': 'AIChess - 智能国际象棋平台',
+        'zh-TW': 'AIChess - 智能國際象棋平台',
+        'en': 'AIChess - Intelligent Chess Platform',
+        'fr': 'AIChess - Plateforme d\'Échecs Intelligente',
+        'es': 'AIChess - Plataforma de Ajedrez Inteligente',
+        'de': 'AIChess - Intelligente Schachplattform',
+        'it': 'AIChess - Piattaforma di Scacchi Intelligente',
+        'pt': 'AIChess - Plataforma de Xadrez Inteligente',
+        'ru': 'AIChess - Интеллектуальная Шахматная Платформа',
+        'ja': 'AIChess - インテリジェントチェスプラットフォーム',
+        'ko': 'AIChess - 지능형 체스 플랫폼'
+      };
+      
+      const footerDescs = {
+        'zh-CN': '挑战5种强大AI棋手，完全免费的在线国际象棋对战平台',
+        'zh-TW': '挑戰5種強大AI棋手，完全免費的線上國際象棋對戰平台',
+        'en': 'Challenge 5 powerful AI chess players, completely free online chess platform',
+        'fr': 'Défiez 5 puissants joueurs d\'échecs IA, plateforme d\'échecs en ligne entièrement gratuite',
+        'es': 'Desafía 5 poderosos jugadores de ajedrez IA, plataforma de ajedrez en línea completamente gratuita',
+        'de': 'Fordern Sie 5 starke KI-Schachspieler heraus, völlig kostenlose Online-Schachplattform',
+        'it': 'Sfida 5 potenti giocatori di scacchi IA, piattaforma di scacchi online completamente gratuita',
+        'pt': 'Desafie 5 poderosos jogadores de xadrez IA, plataforma de xadrez online totalmente gratuita',
+        'ru': 'Бросьте вызов 5 мощным ИИ шахматистам, совершенно бесплатная онлайн-платформа',
+        'ja': '5つの強力なAIチェスプレイヤーに挑戦、完全無料のオンラインチェスプラットフォーム',
+        'ko': '5가지 강력한 AI 체스 플레이어에 도전, 완전 무료 온라인 체스 플랫폼'
+      };
+      
+      const footerFeatures = {
+        'zh-CN': '🤖 5种AI模型 | 💯 永久免费 | 🌍 支持11种语言 | ⚡ 全球CDN加速',
+        'zh-TW': '🤖 5種AI模型 | 💯 永久免費 | 🌍 支援11種語言 | ⚡ 全球CDN加速',
+        'en': '🤖 5 AI Models | 💯 Forever Free | 🌍 11 Languages | ⚡ Global CDN',
+        'fr': '🤖 5 Modèles IA | 💯 Gratuit | 🌍 11 Langues | ⚡ CDN Global',
+        'es': '🤖 5 Modelos IA | 💯 Gratis | 🌍 11 Idiomas | ⚡ CDN Global',
+        'de': '🤖 5 KI-Modelle | 💯 Kostenlos | 🌍 11 Sprachen | ⚡ Globales CDN',
+        'it': '🤖 5 Modelli IA | 💯 Gratuito | 🌍 11 Lingue | ⚡ CDN Globale',
+        'pt': '🤖 5 Modelos IA | 💯 Grátis | 🌍 11 Idiomas | ⚡ CDN Global',
+        'ru': '🤖 5 ИИ Моделей | 💯 Бесплатно | 🌍 11 Языков | ⚡ Глобальный CDN',
+        'ja': '🤖 5つのAIモデル | 💯 永久無料 | 🌍 11言語 | ⚡ グローバルCDN',
+        'ko': '🤖 5개 AI 모델 | 💯 영구 무료 | 🌍 11개 언어 | ⚡ 글로벌 CDN'
+      };
+      
+      const privacyTexts = {
+        'zh-CN': '隐私政策',
+        'zh-TW': '隱私政策',
+        'en': 'Privacy Policy',
+        'fr': 'Politique de Confidentialité',
+        'es': 'Política de Privacidad',
+        'de': 'Datenschutz',
+        'it': 'Privacy Policy',
+        'pt': 'Política de Privacidade',
+        'ru': 'Политика Конфиденциальности',
+        'ja': 'プライバシーポリシー',
+        'ko': '개인정보 보호정책'
+      };
+      
+      const termsTexts = {
+        'zh-CN': '服务条款',
+        'zh-TW': '服務條款',
+        'en': 'Terms of Service',
+        'fr': 'Conditions d\'Utilisation',
+        'es': 'Términos de Servicio',
+        'de': 'Nutzungsbedingungen',
+        'it': 'Termini di Servizio',
+        'pt': 'Termos de Serviço',
+        'ru': 'Условия Использования',
+        'ja': '利用規約',
+        'ko': '서비스 약관'
+      };
+      
+      const contactTexts = {
+        'zh-CN': '联系我们',
+        'zh-TW': '聯繫我們',
+        'en': 'Contact Us',
+        'fr': 'Nous Contacter',
+        'es': 'Contáctenos',
+        'de': 'Kontakt',
+        'it': 'Contattaci',
+        'pt': 'Contate-nos',
+        'ru': 'Связаться',
+        'ja': 'お問い合わせ',
+        'ko': '문의하기'
+      };
+      
+      const licenseTexts = {
+        'zh-CN': '基于MIT许可证开源',
+        'zh-TW': '基於MIT許可證開源',
+        'en': 'Open Source under MIT License',
+        'fr': 'Open Source sous Licence MIT',
+        'es': 'Código Abierto bajo Licencia MIT',
+        'de': 'Open Source unter MIT-Lizenz',
+        'it': 'Open Source sotto Licenza MIT',
+        'pt': 'Código Aberto sob Licença MIT',
+        'ru': 'Открытый Исходный Код по Лицензии MIT',
+        'ja': 'MITライセンスの下でオープンソース',
+        'ko': 'MIT 라이선스 하의 오픈 소스'
+      };
+      
+      document.getElementById('footer-title').textContent = footerTitles[currentLanguage] || footerTitles['en'];
+      document.getElementById('footer-description').textContent = footerDescs[currentLanguage] || footerDescs['en'];
+      document.getElementById('footer-features').textContent = footerFeatures[currentLanguage] || footerFeatures['en'];
+      document.getElementById('footer-privacy').textContent = privacyTexts[currentLanguage] || privacyTexts['en'];
+      document.getElementById('footer-terms').textContent = termsTexts[currentLanguage] || termsTexts['en'];
+      document.getElementById('footer-contact').textContent = contactTexts[currentLanguage] || contactTexts['en'];
+      document.getElementById('footer-license').textContent = licenseTexts[currentLanguage] || licenseTexts['en'] + ' | Powered by Cloudflare Workers & AI';
+    }
+
+    // 打开隐私政策
+    function openPrivacyPolicy() {
+      const privacyContent = {
+        'zh-CN': '隐私政策\\n\\n1. 数据收集：我们不收集个人身份信息\\n2. Cookie：仅用于会话管理\\n3. 游戏数据：存储在Cloudflare Durable Objects\\n4. 安全：企业级加密保护\\n5. 权利：您可随时删除数据',
+        'en': 'Privacy Policy\\n\\n1. Data Collection: We do not collect personal information\\n2. Cookies: Only for session management\\n3. Game Data: Stored in Cloudflare Durable Objects\\n4. Security: Enterprise-grade encryption\\n5. Rights: You can delete data anytime'
+      };
+      alert(privacyContent[currentLanguage] || privacyContent['en']);
+    }
+
+    // 打开服务条款
+    function openTerms() {
+      const termsContent = {
+        'zh-CN': '服务条款\\n\\n1. 服务免费提供，无任何收费\\n2. 遵守国际象棋FIDE规则\\n3. 禁止作弊和滥用\\n4. 服务按现状提供\\n5. 我们保留修改服务的权利',
+        'en': 'Terms of Service\\n\\n1. Service is provided free of charge\\n2. Follow FIDE chess rules\\n3. No cheating or abuse\\n4. Service provided as-is\\n5. We reserve the right to modify the service'
+      };
+      alert(termsContent[currentLanguage] || termsContent['en']);
     }
 
     // Chess.js会在加载完成后自动调用onChessLibLoaded()
