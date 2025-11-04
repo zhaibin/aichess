@@ -805,7 +805,7 @@ export function getFullHTMLTemplate(lang: Language): string {
       
       // 人机对战：只允许人类移动
       if (gameState.mode === 'human-vs-ai') {
-        console.log('人机对战模式');
+        console.log('人机对战模式, selectedSquare:', selectedSquare);
         const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
         console.log('当前玩家:', currentPlayer.type, '颜色:', currentPlayer.color);
         
@@ -817,8 +817,8 @@ export function getFullHTMLTemplate(lang: Language): string {
         
         // 人类回合
         if (selectedSquare) {
-          console.log('尝试移动:', selectedSquare, '->', squareName);
-          makeMove(selectedSquare, squareName);
+          console.log('🎯 尝试移动:', selectedSquare, '->', squareName);
+          await makeMove(selectedSquare, squareName);
           selectedSquare = null;
           clearHighlights();
         } else {
@@ -835,6 +835,7 @@ export function getFullHTMLTemplate(lang: Language): string {
             flashPlayerInfo(gameState.currentTurn);
           }
         }
+        return; // ✅ 重要：必须return，防止继续执行
       }
     }
     
