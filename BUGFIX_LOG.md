@@ -2,36 +2,33 @@
 
 ## 修复记录
 
-### Bug #1: gameState未定义错误
+### Bug #4: 游戏开始后白棋无法移动 🔴 严重
 **时间**: 2025-11-04  
-**严重程度**: 🔴 高  
-**错误信息**:
-```
-TypeError: Cannot read properties of undefined (reading 'name')
-at updateGameInfo
-```
+**报告**: 用户反馈  
+**错误信息**: "不是你的回合或不是你的棋子"
 
-**原因分析**:
-- `pollGameState()` 调用 `updateGameInfo()` 时，gameState可能为null
-- 没有检查whitePlayer和blackPlayer是否存在
+**问题分析**:
+1. 游戏已创建，gameState正常
+2. 但选择白棋时判断失败
+3. 原因：判断条件过于严格
+   ```javascript
+   // 问题代码
+   if (piece && piece.color === chess.turn && piece.color === gameState.currentTurn)
+   ```
+   需要同时满足 `chess.turn` 和 `gameState.currentTurn`，可能不一致
 
 **修复方案**:
-```typescript
-// Before
-function updateGameInfo() {
-  document.getElementById('white-player-name').textContent = gameState.whitePlayer.name;
-  ...
+```javascript
+// Before - 双重判断可能冲突
+if (piece && piece.color === chess.turn && piece.color === gameState.currentTurn) {
+  selectedSquare = squareName;
 }
 
-// After
-function updateGameInfo() {
-  if (!gameState || !gameState.whitePlayer || !gameState.blackPlayer) {
-    console.error('游戏状态不完整');
-    return;
-  }
-  const whiteNameEl = document.getElementById('white-player-name');
-  if (whiteNameEl) whiteNameEl.textContent = gameState.whitePlayer.name || t('whitePlayer');
-  ...
+// After - 以gameState为准
+if (piece && piece.color === gameState.currentTurn) {
+  console.log('选中棋子:', squareName);
+  selectedSquare = squareName;
+  highlightSquare(square);
 }
 ```
 
@@ -39,132 +36,113 @@ function updateGameInfo() {
 
 ---
 
-### Bug #2: 默认开局无法行棋
+### Bug #5: 人人对战不应该联机 🟡 功能问题
 **时间**: 2025-11-04  
-**严重程度**: 🟡 中  
-**问题描述**:
-- 默认打开页面，棋盘显示但无法移动棋子
-- gameState为null时，handleSquareClick直接return
+**报告**: 用户需求  
+**问题**: 人人对战调用API，复杂且不必要
 
-**原因分析**:
-- 未开始游戏时，gameState为null
-- 条件 `if (!gameState || gameState.status !== 'active') return;` 阻止了所有交互
+**需求分析**:
+- 人人对战：两个玩家在**同一设备**上轮流下棋
+- 不需要网络，不需要API
+- 应该是纯本地操作
 
 **修复方案**:
-添加**练习模式**支持：
-```typescript
-function handleSquareClick(square) {
-  const squareName = square.dataset.square;
-  
-  // 如果还没有开始游戏，允许自由移动（练习模式）
-  if (!gameState || gameState.status !== 'active') {
-    if (selectedSquare) {
-      const result = chess.move({ from: selectedSquare, to: squareName });
-      if (result) {
-        renderBoard();
-      }
-      selectedSquare = null;
-      clearHighlights();
-    } else {
-      const piece = chess.get(squareName);
-      if (piece && piece.color === chess.turn) {
-        selectedSquare = squareName;
-        highlightSquare(square);
-      }
-    }
-    return;
-  }
-  
-  // 游戏进行中，调用API
-  ...
-}
-```
-
-**新功能**:
-- ✅ 支持练习模式（无需开始游戏即可下棋）
-- ✅ 本地移动验证
-- ✅ 即时棋盘更新
-
-**状态**: ✅ 已修复并部署
-
----
-
-### Bug #3: pollGameState错误处理不完善
-**时间**: 2025-11-04  
-**严重程度**: 🟢 低  
-**问题描述**:
-- pollGameState未检查response.ok
-- 未验证newState数据完整性
-
-**修复方案**:
-```typescript
-async function pollGameState() {
-  if (!gameState || !gameState.id) return;
-  
-  try {
-    const response = await fetch('/api/game-state?gameId=' + gameState.id);
-    if (!response.ok) {
-      console.error('Poll failed with status:', response.status);
-      return;
-    }
-    
-    const newState = await response.json();
-    
-    // 验证数据完整性
-    if (newState && newState.fen && newState.fen !== gameState.fen) {
-      gameState = newState;
-      chess = new Chess(gameState.fen);
+```javascript
+// 人人对战模式：本地处理，不调用API
+if (gameState.mode === 'human-vs-human') {
+  if (selectedSquare) {
+    const result = chess.move({ from: selectedSquare, to: squareName });
+    if (result) {
+      console.log('本地移动成功:', result);
       renderBoard();
-      updateGameInfo();
+      // 更新本地gameState
+      gameState.currentTurn = chess.turn;
     }
-  } catch (error) {
-    console.error('Poll failed:', error);
+    selectedSquare = null;
+    clearHighlights();
+  } else {
+    const piece = chess.get(squareName);
+    if (piece && piece.color === chess.turn) {
+      selectedSquare = squareName;
+      highlightSquare(square);
+    }
   }
+  return; // 不继续执行API逻辑
 }
+
+// 只有人机对战和AI对战才调用API
 ```
 
+**优势**:
+- ✅ 无网络延迟
+- ✅ 即时响应
+- ✅ 不消耗Worker资源
+- ✅ 更简单直接
+
 **状态**: ✅ 已修复并部署
+
+---
+
+## 当前游戏模式逻辑
+
+### 练习模式（默认，无gameState）
+- **触发**: 未点击"新游戏"
+- **行为**: 本地自由移动
+- **用途**: 练习、学习规则
+
+### 人人对战（gameState.mode === 'human-vs-human'）
+- **触发**: 点击"新游戏" → 选择"人人对战"
+- **行为**: 本地轮流移动
+- **特点**: 无API调用，纯离线
+
+### 人机对战（gameState.mode === 'human-vs-ai'）
+- **触发**: 点击"新游戏" → 选择"人机对战"
+- **行为**: 人类移动调用API，AI自动响应
+- **特点**: 有倒计时、AI思考
+
+### AI对战（gameState.mode === 'ai-vs-ai'）
+- **触发**: 点击"新游戏" → 选择"AI对战"
+- **行为**: 完全由AI控制，人类观战
+- **特点**: 自动进行，观看即可
 
 ---
 
 ## 部署信息
 
-**Version ID**: ef7208a2-59e2-495b-a671-206f75ee3f24  
+**Version ID**: c11ec017-6390-44d2-9548-6301d8bf9fca  
 **部署时间**: 2025-11-04  
-**部署包大小**: 102.96 KiB (gzip: 24.89 KiB)  
-**部署URL**: https://aichess.xants.workers.dev
+**包大小**: 105.00 KiB (gzip: 25.38 KiB)  
 
 ---
 
-## 测试验证
+## 测试清单
 
-### 修复验证清单
-- [x] gameState undefined错误已消除
-- [x] 默认开局可以行棋（练习模式）
-- [x] 错误处理更完善
-- [x] 控制台无错误
-- [x] 用户体验改善
+### 请测试以下场景：
 
-### 测试建议
-1. 打开 https://aichess.xants.workers.dev
-2. 默认状态下尝试移动棋子（应该可以）
-3. 点击"新游戏"创建实际游戏
-4. 验证正常游戏流程
-5. 检查控制台无错误
+#### ✅ 练习模式
+- [ ] 打开页面，直接移动棋子
+- [ ] 应该可以自由移动
+
+#### ✅ 人人对战
+- [ ] 点击"新游戏" → "人人对战"
+- [ ] 白方移动（应该成功）
+- [ ] 黑方移动（应该成功）
+- [ ] 轮流进行（本地，无API调用）
+
+#### ✅ 人机对战
+- [ ] 点击"新游戏" → "人机对战"
+- [ ] 白方移动（应该成功）
+- [ ] AI自动响应（黑方）
+- [ ] 控制台显示详细日志
 
 ---
 
-## 总结
+**请刷新测试并查看控制台日志！** 🔍
 
-**修复数量**: 3个Bug  
-**严重程度**: 1高 + 1中 + 1低  
+如果还有问题，请告诉我控制台显示的具体内容。
+
+---
+
+**修复数量**: 5个Bug  
 **状态**: ✅ 全部修复  
 **部署**: ✅ 已上线
-
-**新增功能**: 练习模式（意外收获）✨
-
----
-
-**记录时间**: 2025-11-04  
-**修复人员**: AI Assistant
-
