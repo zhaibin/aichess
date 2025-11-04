@@ -308,42 +308,35 @@ Your move (JSON only):`;
       try {
         console.log('📤 调用env.AI.run...');
         
-        // ✅ JSON Schema定义 - 更严格的约束
-        const moveSchema = {
-          type: "object",
-          properties: {
-            from: {
-              type: "string",
-              description: "Source square in chess notation (e.g., 'e2')",
-              pattern: "^[a-h][1-8]$"
-            },
-            to: {
-              type: "string", 
-              description: "Target square in chess notation (e.g., 'e4')",
-              pattern: "^[a-h][1-8]$"
-            },
-            reason: {
-              type: "string",
-              description: "Brief tactical or strategic reason for the move"
-            }
-          },
-          required: ["from", "to", "reason"]
-        };
-        
-        // ✅ 根据官方文档构建完整参数
+        // ✅ 使用response_format（所有模型都支持）
+        // 参考: https://developers.cloudflare.com/workers-ai/models/
         const aiParams: any = {
           messages: messages,
-          guided_json: moveSchema,
+          response_format: { type: "json_object" }, // ✅ 文档标准参数
           max_tokens: 150
         };
         
-        // 只添加模型配置中定义的参数（避免无效参数）
-        if (model.temperature !== undefined) aiParams.temperature = model.temperature;
-        if (model.topP !== undefined) aiParams.top_p = model.topP;
-        if (model.topK !== undefined) aiParams.top_k = model.topK;
-        if (model.repetitionPenalty !== undefined) aiParams.repetition_penalty = model.repetitionPenalty;
-        if (model.frequencyPenalty !== undefined) aiParams.frequency_penalty = model.frequencyPenalty;
-        if (model.presencePenalty !== undefined) aiParams.presence_penalty = model.presencePenalty;
+        // 根据官方文档范围添加参数
+        if (model.temperature !== undefined) {
+          aiParams.temperature = model.temperature; // 0-5
+        }
+        if (model.topP !== undefined) {
+          // top_p范围: Deepseek是0.001-1, 其他是0-2
+          aiParams.top_p = Math.max(0.001, Math.min(1, model.topP));
+        }
+        if (model.topK !== undefined) {
+          aiParams.top_k = model.topK; // 1-50
+        }
+        if (model.repetitionPenalty !== undefined) {
+          aiParams.repetition_penalty = model.repetitionPenalty; // 0-2
+        }
+        if (model.frequencyPenalty !== undefined) {
+          // frequency/presence_penalty范围: Deepseek是-2到2
+          aiParams.frequency_penalty = model.frequencyPenalty;
+        }
+        if (model.presencePenalty !== undefined) {
+          aiParams.presence_penalty = model.presencePenalty;
+        }
         
         console.log('📤 AI参数:', JSON.stringify(aiParams, null, 2));
         response = await env.AI.run(model.modelId, aiParams);
