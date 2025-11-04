@@ -524,7 +524,7 @@ function getChessEngineJS(): string {
   return `// AIChess自研国际象棋引擎 v3.0
 class ChessEngine {
   constructor(fen) {
-    this.board = this.createEmptyBoard();
+    this._board = this.createEmptyBoard();
     this.turn = 'w';
     this.moveHistory = [];
     
@@ -541,11 +541,11 @@ class ChessEngine {
 
   setupInitialPosition() {
     const backRow = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'];
-    this.board[0] = backRow.map(t => ({ type: t, color: 'w' }));
-    this.board[1] = Array(8).fill({ type: 'p', color: 'w' });
-    this.board[6] = Array(8).fill({ type: 'p', color: 'b' });
-    this.board[7] = backRow.map(t => ({ type: t, color: 'b' }));
-    for (let i = 2; i < 6; i++) this.board[i] = Array(8).fill(null);
+    this._board[0] = backRow.map(t => ({ type: t, color: 'w' }));
+    this._board[1] = Array(8).fill(null).map(() => ({ type: 'p', color: 'w' }));
+    this._board[6] = Array(8).fill(null).map(() => ({ type: 'p', color: 'b' }));
+    this._board[7] = backRow.map(t => ({ type: t, color: 'b' }));
+    for (let i = 2; i < 6; i++) this._board[i] = Array(8).fill(null);
   }
 
   loadFen(fen) {
@@ -558,7 +558,7 @@ class ChessEngine {
           file += parseInt(char);
         } else {
           const color = char === char.toUpperCase() ? 'w' : 'b';
-          this.board[rank][file++] = { type: char.toLowerCase(), color };
+          this._board[rank][file++] = { type: char.toLowerCase(), color };
         }
       }
     }
@@ -570,7 +570,7 @@ class ChessEngine {
     for (let rank = 7; rank >= 0; rank--) {
       let empty = 0;
       for (let file = 0; file < 8; file++) {
-        const piece = this.board[rank][file];
+        const piece = this._board[rank][file];
         if (piece) {
           if (empty) { fen += empty; empty = 0; }
           fen += piece.color === 'w' ? piece.type.toUpperCase() : piece.type;
@@ -583,12 +583,12 @@ class ChessEngine {
   }
 
   board() {
-    return this.board.map(r => r.map(p => p ? { type: p.type, color: p.color } : null));
+    return this._board.map(r => r.map(p => p ? { type: p.type, color: p.color } : null));
   }
 
   get(sq) {
     const pos = this.parseSquare(sq);
-    return pos ? this.board[pos.rank][pos.file] : null;
+    return pos ? this._board[pos.rank][pos.file] : null;
   }
 
   parseSquare(sq) {
@@ -607,18 +607,18 @@ class ChessEngine {
     const to = this.parseSquare(moveObj.to);
     if (!from || !to) return null;
 
-    const piece = this.board[from.rank][from.file];
+    const piece = this._board[from.rank][from.file];
     if (!piece || piece.color !== this.turn) return null;
 
     if (!this.isLegalMove(from, to)) return null;
 
-    const captured = this.board[to.rank][to.file];
-    this.board[to.rank][to.file] = piece;
-    this.board[from.rank][from.file] = null;
+    const captured = this._board[to.rank][to.file];
+    this._board[to.rank][to.file] = piece;
+    this._board[from.rank][from.file] = null;
 
     // 升变
     if (moveObj.promotion && piece.type === 'p' && (to.rank === 0 || to.rank === 7)) {
-      this.board[to.rank][to.file] = { type: moveObj.promotion, color: piece.color };
+      this._board[to.rank][to.file] = { type: moveObj.promotion, color: piece.color };
     }
 
     const move = {
@@ -635,10 +635,10 @@ class ChessEngine {
   }
 
   isLegalMove(from, to) {
-    const piece = this.board[from.rank][from.file];
+    const piece = this._board[from.rank][from.file];
     if (!piece) return false;
 
-    const target = this.board[to.rank][to.file];
+    const target = this._board[to.rank][to.file];
     if (target && target.color === piece.color) return false;
 
     return this.canPieceMove(piece, from, to);
@@ -652,10 +652,10 @@ class ChessEngine {
       case 'p':
         const dir = piece.color === 'w' ? 1 : -1;
         const startRank = piece.color === 'w' ? 1 : 6;
-        const target = this.board[to.rank][to.file];
+        const target = this._board[to.rank][to.file];
         if (dx === 0 && dy === dir && !target) return true;
         if (dx === 0 && dy === 2 * dir && from.rank === startRank && !target) {
-          return !this.board[from.rank + dir][from.file];
+          return !this._board[from.rank + dir][from.file];
         }
         if (Math.abs(dx) === 1 && dy === dir && target && target.color !== piece.color) return true;
         return false;
@@ -680,7 +680,7 @@ class ChessEngine {
     let x = from.file + dx;
     let y = from.rank + dy;
     while (x !== to.file || y !== to.rank) {
-      if (this.board[y][x]) return false;
+      if (this._board[y][x]) return false;
       x += dx;
       y += dy;
     }
@@ -695,7 +695,7 @@ class ChessEngine {
       for (let fromFile = 0; fromFile < 8; fromFile++) {
         if (square && (square.rank !== fromRank || square.file !== fromFile)) continue;
         
-        const piece = this.board[fromRank][fromFile];
+        const piece = this._board[fromRank][fromFile];
         if (!piece || piece.color !== this.turn) continue;
 
         for (let toRank = 0; toRank < 8; toRank++) {
