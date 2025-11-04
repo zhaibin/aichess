@@ -335,15 +335,23 @@ DO NOT repeat! Choose a DIFFERENT move to avoid draw by repetition!`;
       
       // 用户提示词：棋局信息
       const userPrompt = `${model.role} playing ${colorName}.
-Move: ${gameState.moves.length + 1} (${phase.toUpperCase()})
-Full History: ${pgnHistory || 'game start'}
-Recent: ${recentDetail || 'none'}${recentMovesWarning}
-Time: ${yourMins}:${yourSecs.toString().padStart(2,'0')}${timePressure} vs ${oppMins}:${oppSecs.toString().padStart(2,'0')}
+Move #${gameState.moves.length + 1} - Phase: ${phase.toUpperCase()}
 
-LEGAL MOVES (choose ONE from this list, MUST be from this list):
-${moveList}${legalMoves.length > 25 ? ' +more' : ''}
+GAME HISTORY (Standard PGN):
+${pgnHistory || 'Starting position'}
+Last 5 moves: ${lastMovesSimple || 'none'}${recentMovesWarning}
 
-CRITICAL: Your move MUST be from the legal moves list above!`;
+TIME:
+You: ${yourMins}:${yourSecs.toString().padStart(2,'0')}${timePressure}
+Opponent: ${oppMins}:${oppSecs.toString().padStart(2,'0')}
+
+YOUR LEGAL MOVES (choose ONE, MUST match exactly):
+${moveList}${legalMoves.length > 25 ? '...' : ''}
+
+IMPORTANT:
+1. Pick ONE move from legal moves list
+2. Move must be in the list (e.g., "1.e7→e5" means from="e7", to="e5")
+3. Avoid repetition if warned above`;
 
       console.log('📋 阶段:', phase, '提示词风格:', promptStyle);
       console.log('📤 System长度:', systemPrompt.length, 'User长度:', userPrompt.length);
@@ -445,23 +453,36 @@ CRITICAL: Your move MUST be from the legal moves list above!`;
       if (result.success) {
         console.log('✅ AI移动合法');
         
-        // ✅ 检查是否与最近移动重复（防止死循环）
+        // ✅ 强化死循环检测
         if (gameState.moves.length >= 2) {
           const lastMove = gameState.moves[gameState.moves.length - 1];
-          const last2Move = gameState.moves[gameState.moves.length - 2];
           
-          // 检查是否重复最后一步
+          // 检测1：禁止立即撤销（A→B 然后 B→A）
           if (moveData.from === lastMove.to && moveData.to === lastMove.from) {
-            console.warn('⚠️ AI试图重复最后一步（可能死循环），拒绝此移动');
-            continue; // 重试
+            console.warn('🚫 死循环检测1: AI试图撤销上一步，拒绝！');
+            continue;
           }
           
-          // 检查是否重复倒数第二步
+          // 检测2：禁止重复同一步
           if (gameState.moves.length >= 4) {
-            const last4Move = gameState.moves[gameState.moves.length - 4];
-            if (moveData.from === last2Move.from && moveData.to === last2Move.to) {
-              console.warn('⚠️ AI重复之前的移动（可能形成循环），拒绝');
-              continue; // 重试
+            const move2Ago = gameState.moves[gameState.moves.length - 3];
+            if (moveData.from === move2Ago.from && moveData.to === move2Ago.to) {
+              console.warn('🚫 死循环检测2: AI重复2步前的移动，可能形成A-B-A-B循环，拒绝！');
+              continue;
+            }
+          }
+          
+          // 检测3：禁止三次重复相同模式
+          if (gameState.moves.length >= 6) {
+            const last6 = gameState.moves.slice(-6);
+            const current = `${moveData.from}-${moveData.to}`;
+            const m1 = `${last6[0].from}-${last6[0].to}`;
+            const m3 = `${last6[2].from}-${last6[2].to}`;
+            const m5 = `${last6[4].from}-${last6[4].to}`;
+            
+            if (current === m1 && current === m3 && current === m5) {
+              console.warn('🚫 死循环检测3: 三次重复相同移动，会导致和棋，拒绝！');
+              continue;
             }
           }
         }
