@@ -325,6 +325,17 @@ export async function getAIMove(
 
       if (result.success) {
         console.log('✅ AI移动合法');
+        
+        // ✅ 附加分析信息
+        const phase = getGamePhase(gameState.moves.length);
+        moveData.analysis = {
+          phase: phase.toUpperCase(),
+          reasoning: parsed.reasoning || '移动完成',
+          evaluation: parsed.evaluation || '-',
+          confidence: parsed.confidence || '-'
+        };
+        console.log('📊 附加AI分析:', moveData.analysis);
+        
         return moveData;
       } else {
         console.warn('❌ AI移动不合法:', moveData);
@@ -365,10 +376,20 @@ function getRandomLegalMove(gameState: GameState): { from: string; to: string } 
 
     const randomMove = allMoves[Math.floor(Math.random() * allMoves.length)];
     console.log('🎯 随机选择:', randomMove.from, '→', randomMove.to);
-    return {
+    
+    // ✅ 附加随机移动标记
+    const result = {
       from: randomMove.from,
-      to: randomMove.to
+      to: randomMove.to,
+      analysis: {
+        phase: 'RANDOM',
+        reasoning: '使用随机合法移动（Workers AI降级）',
+        evaluation: '-',
+        confidence: 'N/A'
+      }
     };
+    console.log('📊 随机移动分析:', result.analysis);
+    return result;
   } catch (error) {
     console.error('❌ 随机移动生成失败:', error);
     return null;
