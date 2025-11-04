@@ -119,15 +119,35 @@ export async function getAIMove(
       console.log('📤 发送到Workers AI, 模型:', model.modelId);
       console.log('📤 消息数量:', messages.length);
       
-      // ✅ Cloudflare Workers AI Gateway格式
-      const aiInput = {
-        prompt: messages.map(m => `${m.role}: ${m.content}`).join('\n\n'),
-        max_tokens: 100
-      };
-      
-      console.log('📤 AI输入:', JSON.stringify(aiInput).substring(0, 200));
-      
-      const response = await env.AI.run(model.modelId, aiInput);
+      // ✅ 尝试方案1: 使用messages格式（LLM模型）
+      let response;
+      try {
+        console.log('📤 尝试格式1: {messages}');
+        response = await env.AI.run(model.modelId, {
+          messages: messages
+        });
+        console.log('✅ 格式1成功');
+      } catch (e1) {
+        console.log('❌ 格式1失败:', e1.message);
+        
+        // 尝试方案2: 使用prompt格式
+        try {
+          console.log('📤 尝试格式2: {prompt}');
+          const promptText = messages.map(m => `${m.role}: ${m.content}`).join('\n\n');
+          response = await env.AI.run(model.modelId, {
+            prompt: promptText
+          });
+          console.log('✅ 格式2成功');
+        } catch (e2) {
+          console.log('❌ 格式2失败:', e2.message);
+          
+          // 尝试方案3: 直接传prompt字符串
+          console.log('📤 尝试格式3: prompt字符串');
+          const promptText = messages.map(m => `${m.role}: ${m.content}`).join('\n\n');
+          response = await env.AI.run(model.modelId, promptText);
+          console.log('✅ 格式3成功');
+        }
+      }
       
       console.log('📥 Workers AI响应类型:', typeof response);
       console.log('📥 Workers AI响应keys:', Object.keys(response || {}));
