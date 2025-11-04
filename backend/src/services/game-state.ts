@@ -198,13 +198,24 @@ export class GameState extends DurableObject {
    * 获取游戏状态
    */
   private async handleGetState(): Promise<Response> {
+    console.log('📊 handleGetState 被调用');
+    console.log('this.game 存在?', !!this.game);
+    
     if (!this.game) {
+      console.log('尝试从storage恢复...');
+      this.game = await this.state.storage.get('game');
+      console.log('恢复结果:', this.game ? 'OK' : 'FAILED');
+    }
+    
+    if (!this.game) {
+      console.error('❌ Game not found');
       return new Response(JSON.stringify({ error: 'Game not found' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
+    console.log('✅ 返回游戏状态:', this.game.id);
     return new Response(JSON.stringify(this.game), {
       headers: { 'Content-Type': 'application/json' }
     });
