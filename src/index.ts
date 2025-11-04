@@ -594,12 +594,44 @@ ${getSEOTags(lang)}
       opacity: 0.9;
     }
 
-    .game-setup {
+    .game-setup-sidebar {
+      position: fixed;
+      top: 0;
+      right: -400px;
+      width: 400px;
+      height: 100vh;
       background: white;
-      border-radius: 12px;
       padding: 30px;
-      margin-bottom: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      box-shadow: -5px 0 20px rgba(0,0,0,0.3);
+      transition: right 0.3s ease;
+      z-index: 2000;
+      overflow-y: auto;
+    }
+
+    .game-setup-sidebar.open {
+      right: 0;
+    }
+
+    .setup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1999;
+      display: none;
+    }
+
+    .setup-overlay.show {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .game-setup-sidebar {
+        width: 100%;
+        right: -100%;
+      }
     }
 
     .game-area {
@@ -882,9 +914,79 @@ ${getSEOTags(lang)}
       width: auto;
       min-width: 150px;
     }
+
+    .new-game-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: #4caf50;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: all 0.3s;
+      font-weight: 600;
+    }
+
+    .new-game-btn:hover {
+      background: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+
+    .welcome-message {
+      text-align: center;
+      padding: 40px 20px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      margin: 20px auto;
+      max-width: 600px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .welcome-message h2 {
+      color: #667eea;
+      margin-bottom: 15px;
+      font-size: 2em;
+    }
+
+    .welcome-message p {
+      color: #666;
+      font-size: 1.1em;
+      line-height: 1.6;
+    }
+
+    .close-setup {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #f44336;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 1.5em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   </style>
 </head>
 <body>
+  <!-- 新游戏按钮 -->
+  <button class="new-game-btn" onclick="openGameSetup()">
+    <span id="new-game-btn-text">新游戏</span>
+  </button>
+
+  <!-- 遮罩层 -->
+  <div class="setup-overlay" id="setup-overlay" onclick="closeGameSetup()"></div>
+
   <div class="language-selector">
     <select id="language-select">
       <option value="zh-CN">简体中文</option>
@@ -907,8 +1009,9 @@ ${getSEOTags(lang)}
       <p class="tagline">aichess.win</p>
     </header>
 
-    <!-- 游戏设置 -->
-    <div class="game-setup" id="game-setup">
+    <!-- 游戏设置（侧边栏） -->
+    <div class="game-setup-sidebar" id="game-setup">
+      <button class="close-setup" onclick="closeGameSetup()">×</button>
       <h2 id="new-game-title">新游戏</h2>
       
       <div class="form-group">
@@ -942,9 +1045,16 @@ ${getSEOTags(lang)}
       <button class="btn-success" id="start-game" onclick="startGame()">开始游戏</button>
     </div>
 
-    <!-- 游戏区域 -->
-    <div class="game-area hidden" id="game-area">
+    <!-- 游戏区域（默认显示） -->
+    <div class="game-area" id="game-area">
       <div class="board-container">
+        <!-- 欢迎消息 -->
+        <div class="welcome-message" id="welcome-message">
+          <h2 id="welcome-title">欢迎来到AIChess</h2>
+          <p id="welcome-text">点击左上角"新游戏"按钮开始对弈</p>
+          <p id="welcome-features">🤖 5种AI棋手 | 💯 完全免费 | 🌍 11种语言</p>
+        </div>
+        
         <div id="game-result" class="game-result hidden"></div>
         <div id="chessboard"></div>
       </div>
@@ -1438,6 +1548,27 @@ ${getSEOTags(lang)}
       
       document.getElementById('game-mode').addEventListener('change', updateAISelectors);
       updateAISelectors();
+      
+      // 初始化空棋盘
+      initEmptyBoard();
+    }
+
+    // 初始化空棋盘（等待开局）
+    function initEmptyBoard() {
+      chess = new Chess();
+      renderBoard();
+    }
+
+    // 打开游戏设置
+    function openGameSetup() {
+      document.getElementById('game-setup').classList.add('open');
+      document.getElementById('setup-overlay').classList.add('show');
+    }
+
+    // 关闭游戏设置
+    function closeGameSetup() {
+      document.getElementById('game-setup').classList.remove('open');
+      document.getElementById('setup-overlay').classList.remove('show');
     }
 
     // 加载AI模型列表
@@ -1489,12 +1620,31 @@ ${getSEOTags(lang)}
       
       document.getElementById('app-name').textContent = t('appName');
       document.getElementById('new-game-title').textContent = t('newGame');
+      document.getElementById('new-game-btn-text').textContent = t('newGame');
       document.getElementById('game-mode-label').textContent = t('timeControl');
       document.getElementById('time-control-label').textContent = t('timeControl');
       document.getElementById('white-ai-label').textContent = t('whitePlayer') + ' ' + t('ai');
       document.getElementById('black-ai-label').textContent = t('blackPlayer') + ' ' + t('ai');
       document.getElementById('start-game').textContent = t('startGame');
       document.getElementById('move-history-title').textContent = t('moveHistory');
+      
+      // 更新欢迎消息
+      document.getElementById('welcome-title').textContent = t('appName');
+      const welcomeTexts = {
+        'zh-CN': '点击左上角"新游戏"按钮开始对弈',
+        'zh-TW': '點擊左上角「新遊戲」按鈕開始對弈',
+        'en': 'Click "New Game" button to start playing',
+        'fr': 'Cliquez sur "Nouvelle Partie" pour commencer',
+        'es': 'Haz clic en "Nueva Partida" para comenzar',
+        'de': 'Klicken Sie auf "Neues Spiel" um zu beginnen',
+        'it': 'Clicca su "Nuova Partita" per iniziare',
+        'pt': 'Clique em "Novo Jogo" para começar',
+        'ru': 'Нажмите "Новая Игра" чтобы начать',
+        'ja': '「新しいゲーム」をクリックして開始',
+        'ko': '"새 게임" 버튼을 클릭하여 시작'
+      };
+      document.getElementById('welcome-text').textContent = welcomeTexts[currentLanguage] || welcomeTexts['en'];
+      document.getElementById('welcome-features').textContent = '🤖 5' + t('ai') + ' | 💯 ' + t('newGame') + ' | 🌍 11' + t('language');
       
       // 更新游戏模式选项
       const gameModeSelect = document.getElementById('game-mode');
@@ -1546,8 +1696,11 @@ ${getSEOTags(lang)}
         gameState = await response.json();
         chess = new Chess(gameState.fen);
         
-        document.getElementById('game-setup').classList.add('hidden');
-        document.getElementById('game-area').classList.remove('hidden');
+        // 关闭设置侧边栏
+        closeGameSetup();
+        
+        // 隐藏欢迎消息
+        document.getElementById('welcome-message').classList.add('hidden');
         
         renderBoard();
         updateGameInfo();
@@ -1768,12 +1921,25 @@ ${getSEOTags(lang)}
       }
       
       gameState = null;
-      chess = null;
+      chess = new Chess();
       selectedSquare = null;
       
-      document.getElementById('game-area').classList.add('hidden');
-      document.getElementById('game-setup').classList.remove('hidden');
+      // 显示欢迎消息
+      document.getElementById('welcome-message').classList.remove('hidden');
       document.getElementById('game-result').classList.add('hidden');
+      
+      // 渲染空棋盘
+      renderBoard();
+      
+      // 清空信息面板
+      document.getElementById('white-player-name').textContent = '白方';
+      document.getElementById('black-player-name').textContent = '黑方';
+      document.getElementById('white-timer').textContent = '10:00';
+      document.getElementById('black-timer').textContent = '10:00';
+      document.getElementById('move-list').innerHTML = '';
+      
+      // 打开游戏设置
+      openGameSetup();
     }
 
     // 认输
