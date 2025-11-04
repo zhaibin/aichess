@@ -922,11 +922,16 @@ export function getFullHTMLTemplate(lang: Language): string {
         console.log('游戏开始，状态:', gameState.status, '当前回合:', gameState.currentTurn);
         console.log('完整gameState:', gameState);
         
-        // AI vs AI模式：游戏已由backend队列启动，只需轮询即可
+        // AI vs AI模式：前端主动触发首次AI移动
         if (gameState.mode === 'ai-vs-ai') {
-          console.log('🔥 AI vs AI对战已在后台队列中运行');
-          console.log('💡 提示：队列处理需要时间，请耐心等待...');
-          console.log('每2秒检查一次更新');
+          console.log('🔥 AI vs AI对战，前端触发首次移动');
+          console.log('💡 每2秒检查更新并触发下一步');
+          
+          // 立即触发第一步
+          setTimeout(() => {
+            console.log('🚀 触发首次AI移动');
+            triggerAIvsAIMove();
+          }, 500);
         }
       } catch (error) {
         console.error('Failed to start game:', error);
@@ -1304,6 +1309,56 @@ export function getFullHTMLTemplate(lang: Language): string {
         }
       } catch (error) {
         console.error('AI move failed:', error);
+      }
+    }
+    
+    /**
+     * AI vs AI前端触发移动
+     */
+    async function triggerAIvsAIMove() {
+      if (!gameState || gameState.mode !== 'ai-vs-ai' || gameState.status !== 'active') {
+        console.log('⚠️ 游戏状态不适合AI移动');
+        return;
+      }
+      
+      const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
+      
+      if (currentPlayer.type !== 'ai') {
+        console.log('⚠️ 当前玩家不是AI');
+        return;
+      }
+      
+      console.log('🤖 触发AI移动:', currentPlayer.name, '(' + gameState.currentTurn + ')');
+      
+      try {
+        const response = await fetch('/api/ai-move', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ gameId: gameState.id })
+        });
+        
+        if (response.ok) {
+          const newState = await response.json();
+          console.log('✅ AI移动成功');
+          gameState = newState;
+          chess = new Chess(gameState.fen);
+          renderBoard();
+          updateGameInfo();
+          
+          // 如果游戏还在进行，触发下一步
+          if (gameState.status === 'active') {
+            const nextPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
+            if (nextPlayer.type === 'ai') {
+              console.log('🔁 2秒后触发下一步AI移动');
+              setTimeout(() => triggerAIvsAIMove(), 2000);
+            }
+          }
+        } else {
+          const error = await response.json();
+          console.error('❌ AI移动失败:', error);
+        }
+      } catch (error) {
+        console.error('❌ 触发AI移动异常:', error);
       }
     }
     
