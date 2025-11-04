@@ -520,35 +520,20 @@ function getManifest(): string {
  * 获取chess.js库文件
  */
 async function getChessLib(): Promise<string> {
-  // 使用ES模块版本的chess.js并包装为浏览器全局变量
-  const chessModule = await import('chess.js');
-  
-  // 创建一个IIFE，将Chess类暴露为全局变量
-  return \`(function() {
-    // Chess.js v1.4.0 - Local
-    const { Chess } = $\{JSON.stringify(chessModule)};
-    window.Chess = Chess || function(fen) {
-      this.fen = fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-      this.board = function() { return []; };
-      this.move = function() { return null; };
-      this.moves = function() { return []; };
-      this.turn = function() { return 'w'; };
-      this.fen = function() { return this.fen; };
-      this.isCheck = function() { return false; };
-      this.isCheckmate = function() { return false; };
-      this.isDraw = function() { return false; };
-      this.isGameOver = function() { return false; };
-      this.isStalemate = function() { return false; };
-      this.isThreefoldRepetition = function() { return false; };
-      this.isInsufficientMaterial = function() { return false; };
-      this.get = function() { return null; };
-      this.undo = function() { return null; };
-      this.history = function() { return []; };
-      this.pgn = function() { return ''; };
-      this.ascii = function() { return ''; };
-      this.loadPgn = function() { return false; };
-    };
-  })();\`;
+  // 直接导入npm安装的chess.js
+  try {
+    const { Chess } = await import('chess.js');
+    
+    // 创建浏览器包装器
+    return `(function() {
+  const ChessClass = ${Chess.toString()};
+  window.Chess = ChessClass;
+})();`;
+  } catch (error) {
+    console.error('Failed to import chess.js:', error);
+    // 返回最小实现
+    return `window.Chess = function() { console.error('Chess.js not available'); };`;
+  }
 }
 
 /**
