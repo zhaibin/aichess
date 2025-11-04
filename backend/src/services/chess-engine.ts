@@ -492,6 +492,36 @@ export class ChessEngine {
   }
 
   /**
+   * 获取所有合法移动（详细版，返回对象）
+   */
+  moves(): Array<{ from: string; to: string }> {
+    const moves: Array<{ from: string; to: string }> = [];
+
+    for (let fromRank = 0; fromRank < 8; fromRank++) {
+      for (let fromFile = 0; fromFile < 8; fromFile++) {
+        const piece = this.board[fromRank][fromFile];
+        if (!piece || piece.color !== this.currentTurn) continue;
+
+        for (let toRank = 0; toRank < 8; toRank++) {
+          for (let toFile = 0; toFile < 8; toFile++) {
+            const from = { file: fromFile, rank: fromRank };
+            const to = { file: toFile, rank: toRank };
+
+            if (this.isLegalMove(from, to)) {
+              moves.push({
+                from: this.squareToAlgebraic(from),
+                to: this.squareToAlgebraic(to)
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return moves;
+  }
+
+  /**
    * 获取当前轮次
    */
   getTurn(): PieceColor {
