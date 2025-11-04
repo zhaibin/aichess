@@ -4,34 +4,36 @@ import { GameState } from '../types';
 import { AI_MODELS } from '../config/constants';
 
 /**
- * 生成AI棋手的系统提示词（优化版：更清晰）
+ * 生成AI棋手的系统提示词（优化版：强调战略思考）
  */
 export function getSystemPrompt(): string {
-  return `You are a professional chess grandmaster AI.
+  return `You are a professional chess grandmaster AI. Analyze the position carefully and play strategically.
+
+STRATEGIC GUIDELINES:
+- Control the center (d4, d5, e4, e5)
+- Develop pieces early (knights before bishops)
+- Capture opponent's pieces when favorable
+- Protect your king
+- Look for tactical opportunities (forks, pins, skewers)
+- Consider material balance (Queen=9, Rook=5, Bishop/Knight=3, Pawn=1)
 
 RESPONSE FORMAT (STRICT):
-Return ONLY a JSON object with your move in UCI format:
+Return ONLY a JSON object:
 {"from": "e2", "to": "e4"}
 
-For pawn promotion, add the piece:
+For pawn promotion:
 {"from": "e7", "to": "e8", "promotion": "q"}
 
-MOVE EXAMPLES:
-- Opening: {"from": "e2", "to": "e4"}
+EXAMPLES:
+- Normal: {"from": "e2", "to": "e4"}
 - Capture: {"from": "d4", "to": "e5"}
-- Castle kingside: {"from": "e1", "to": "g1"}
+- Castle: {"from": "e1", "to": "g1"}
 - Promotion: {"from": "a7", "to": "a8", "promotion": "q"}
 
-PROMOTION OPTIONS:
-- "q" = Queen (best)
-- "r" = Rook
-- "b" = Bishop  
-- "n" = Knight
-
 CRITICAL:
-- Return ONLY JSON
-- NO explanations
+- Return ONLY JSON, NO text
 - Move MUST be legal
+- Think strategically, not randomly
 - Use lowercase (a-h, 1-8)`;
 }
 
@@ -106,8 +108,9 @@ export async function getAIMove(
   console.log('✅ AI绑定检查通过');
   console.log('📋 使用模型:', model.name, '(' + model.modelId + ')');
   console.log('📋 API格式:', model.type);
+  console.log('📋 PGN历史:', gameState.moves.length, '步');
 
-  const maxRetries = 3;
+  const maxRetries = 2; // 减少重试，失败快速降级
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
@@ -217,25 +220,24 @@ export async function getAIMove(
       console.error('错误详情:', error instanceof Error ? error.message : String(error));
       console.error('错误堆栈:', error instanceof Error ? error.stack : '无堆栈');
       
-      // 最后一次尝试，降级为随机移动
-      if (attempt === maxRetries - 1) {
-        console.log('⚠️ AI所有尝试失败，使用随机移动');
-        return getRandomLegalMove(gameState);
-      }
+      // 继续重试
+      console.log('⏳ 等待1秒后重试...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
 
-  // 不应该到这里，降级
-  console.log('⚠️ AI逻辑异常，使用随机移动');
+  // 所有尝试失败，降级
+  console.log('⚠️ Workers AI所有尝试失败，降级为随机移动');
+  console.log('💡 提示：AI会选择随机但合法的移动');
   return getRandomLegalMove(gameState);
 }
 
 /**
- * 获取随机合法移动（优化版：优先吃子）
+ * 获取随机合法移动（仅作为降级方案）
  */
 function getRandomLegalMove(gameState: GameState): { from: string; to: string } | null {
   try {
-    console.log('🎲 生成智能随机移动, FEN:', gameState.fen);
+    console.log('⚠️ 降级：生成随机移动');
     const chess = new ChessEngine(gameState.fen);
     const allMoves = chess.moves();
     console.log('📋 合法移动数量:', allMoves.length);
@@ -245,45 +247,14 @@ function getRandomLegalMove(gameState: GameState): { from: string; to: string } 
       return null;
     }
 
-    // 分类移动：吃子 vs 普通移动
-    const captureMoves: typeof allMoves = [];
-    const normalMoves: typeof allMoves = [];
-    
-    for (const move of allMoves) {
-      const fromSquare = chess.parseSquare ? chess.parseSquare(move.from) : null;
-      const toSquare = chess.parseSquare ? chess.parseSquare(move.to) : null;
-      
-      if (fromSquare && toSquare) {
-        const targetPiece = chess.get(move.to);
-        if (targetPiece) {
-          captureMoves.push(move);
-        } else {
-          normalMoves.push(move);
-        }
-      }
-    }
-    
-    console.log('📊 吃子移动:', captureMoves.length, '普通移动:', normalMoves.length);
-    
-    // 70%概率选择吃子，30%概率普通移动
-    let selectedMove;
-    if (captureMoves.length > 0 && Math.random() < 0.7) {
-      selectedMove = captureMoves[Math.floor(Math.random() * captureMoves.length)];
-      console.log('🎯 选择吃子:', selectedMove.from, '→', selectedMove.to, '吃', chess.get(selectedMove.to)?.type);
-    } else {
-      selectedMove = normalMoves.length > 0 
-        ? normalMoves[Math.floor(Math.random() * normalMoves.length)]
-        : allMoves[Math.floor(Math.random() * allMoves.length)];
-      console.log('🎯 选择普通移动:', selectedMove.from, '→', selectedMove.to);
-    }
-    
+    const randomMove = allMoves[Math.floor(Math.random() * allMoves.length)];
+    console.log('🎯 随机选择:', randomMove.from, '→', randomMove.to);
     return {
-      from: selectedMove.from,
-      to: selectedMove.to
+      from: randomMove.from,
+      to: randomMove.to
     };
   } catch (error) {
     console.error('❌ 随机移动生成失败:', error);
-    console.error('错误详情:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }
