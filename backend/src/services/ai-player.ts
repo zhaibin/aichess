@@ -236,32 +236,39 @@ export async function getAIMove(
       const oppSecs = oppTime % 60;
       const timePressure = yourTime < 60 ? ' ⚠️TIME PRESSURE!' : yourTime < 180 ? ' ⏰' : '';
       
-      // ✅ 战略提示（极简化）
+      // ✅ 分离系统提示词和用户提示词
+      
+      // 系统提示词：角色定义 + JSON格式严格要求
+      const systemPrompt = `You are a chess move generator. You MUST respond with ONLY valid JSON.
+Format: {"from":"e2","to":"e4","reason":"brief tactical reason"}
+NO other text. NO explanations. NO analysis. ONLY JSON.`;
+
+      // 用户提示词：具体棋局信息
       const hints = {
-        opening: 'Control center, develop, castle',
-        middlegame: 'Tactics: forks/pins/skewers',
-        endgame: 'King+pawns, push to promote'
+        opening: 'Control center, develop pieces, castle',
+        middlegame: 'Find tactics (forks/pins), improve pieces',
+        endgame: 'Activate king, push pawns to promote'
       };
       
-      // ✅ 超级简洁 - 完全避免"分析"关键词
-      const comprehensivePrompt = `${model.role}, ${colorName}, move ${gameState.moves.length + 1}, ${phase}
-Moves: ${pgnHistory || 'start'}
-Time: ${yourMins}:${yourSecs.toString().padStart(2,'0')}${timePressure}
-${hints[phase as keyof typeof hints]}
+      const userPrompt = `${model.role} playing ${colorName}.
+Move: ${gameState.moves.length + 1} (${phase})
+History: ${pgnHistory || 'game start'}
+Time: ${yourMins}:${yourSecs.toString().padStart(2,'0')}${timePressure} vs ${oppMins}:${oppSecs.toString().padStart(2,'0')}
 
-Legal: ${moveList}${legalMoves.length > 25 ? '...' : ''}
+Strategy: ${hints[phase as keyof typeof hints]}
 
-JSON only:
-{"from":"e2","to":"e4","reason":"brief"}`;
+Your legal moves:
+${moveList}${legalMoves.length > 25 ? '...' : ''}
 
-
+Choose ONE move and return JSON:`;
 
       console.log('📋 阶段:', phase, '角色:', model.role);
-      console.log('📤 提示词长度:', comprehensivePrompt.length, '字符');
-      console.log('📤 提示词内容:\n', comprehensivePrompt);
+      console.log('📤 System长度:', systemPrompt.length, 'User长度:', userPrompt.length);
+      console.log('📤 User提示:\n', userPrompt);
       
       const messages = [
-        { role: 'user', content: comprehensivePrompt }
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
       ];
 
       console.log('📤 发送到Workers AI, 模型:', model.modelId);
