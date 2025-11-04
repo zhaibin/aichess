@@ -267,47 +267,57 @@ Your move:`;
         aiResponse = response;
       }
 
-      console.log('AI原始响应长度:', aiResponse.length);
+      console.log('AI原始响应类型:', typeof aiResponse);
       console.log('AI响应内容:', aiResponse);
 
       let moveData = null;
       let reasonText = '';
       
-      // ✅ 直接解析JSON格式
-      try {
-        moveData = JSON.parse(aiResponse.trim());
+      // ✅ 检查aiResponse是对象还是字符串
+      if (typeof aiResponse === 'object' && aiResponse !== null) {
+        // 已经是对象，直接使用
+        moveData = aiResponse;
         reasonText = moveData.reason || '';
-        console.log('✅ JSON解析成功:', moveData);
-      } catch (e) {
-        console.log('❌ 不是纯JSON，尝试提取...');
-        
-        // 尝试从文本中提取JSON
-        const jsonMatch = aiResponse.match(/\{[^}]*"from"[^}]*"to"[^}]*\}/);
-        if (jsonMatch) {
-          try {
-            moveData = JSON.parse(jsonMatch[0]);
-            reasonText = moveData.reason || '';
-            console.log('✅ 提取JSON成功:', moveData);
-          } catch (e2) {
-            console.log('❌ 提取JSON失败');
-          }
-        }
-        
-        // 正则提取
-        if (!moveData) {
-          const fromMatch = aiResponse.match(/"from"[:\s]*"([a-h][1-8])"/i);
-          const toMatch = aiResponse.match(/"to"[:\s]*"([a-h][1-8])"/i);
-          const reasonMatch = aiResponse.match(/"reason"[:\s]*"([^"]+)"/i);
+        console.log('✅ AI响应已是对象:', moveData);
+      } else if (typeof aiResponse === 'string') {
+        // 是字符串，尝试解析
+        try {
+          moveData = JSON.parse(aiResponse.trim());
+          reasonText = moveData.reason || '';
+          console.log('✅ JSON解析成功:', moveData);
+        } catch (e) {
+          console.log('❌ 不是纯JSON，尝试提取...');
           
-          if (fromMatch && toMatch) {
-            moveData = {
-              from: fromMatch[1].toLowerCase(),
-              to: toMatch[1].toLowerCase()
-            };
-            reasonText = reasonMatch ? reasonMatch[1] : '';
-            console.log('✅ 正则提取成功:', moveData);
+          // 尝试从文本中提取JSON
+          const jsonMatch = aiResponse.match(/\{[^}]*"from"[^}]*"to"[^}]*\}/);
+          if (jsonMatch) {
+            try {
+              moveData = JSON.parse(jsonMatch[0]);
+              reasonText = moveData.reason || '';
+              console.log('✅ 提取JSON成功:', moveData);
+            } catch (e2) {
+              console.log('❌ 提取JSON失败');
+            }
+          }
+          
+          // 正则提取
+          if (!moveData) {
+            const fromMatch = aiResponse.match(/"from"[:\s]*"([a-h][1-8])"/i);
+            const toMatch = aiResponse.match(/"to"[:\s]*"([a-h][1-8])"/i);
+            const reasonMatch = aiResponse.match(/"reason"[:\s]*"([^"]+)"/i);
+            
+            if (fromMatch && toMatch) {
+              moveData = {
+                from: fromMatch[1].toLowerCase(),
+                to: toMatch[1].toLowerCase()
+              };
+              reasonText = reasonMatch ? reasonMatch[1] : '';
+              console.log('✅ 正则提取成功:', moveData);
+            }
           }
         }
+      } else {
+        console.error('❌ AI响应格式未知:', typeof aiResponse);
       }
 
       if (!moveData || !moveData.from || !moveData.to) {
