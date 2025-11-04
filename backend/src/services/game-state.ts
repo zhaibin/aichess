@@ -67,8 +67,9 @@ export class GameState extends DurableObject {
     const data: CreateGameRequest = await request.json();
     console.log('🎮 DO handleCreate被调用, mode:', data.mode);
 
-    const gameId = crypto.randomUUID();
-    console.log('📥 生成游戏ID:', gameId);
+    // ✅ 使用Worker传递的gameId，不再生成新的
+    const gameId = (data as any).gameId;
+    console.log('📥 使用Worker传递的gameId:', gameId);
     const now = Date.now();
 
     const whitePlayer: Player = {

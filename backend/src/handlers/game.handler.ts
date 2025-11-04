@@ -45,7 +45,7 @@ export async function handleCreateGame(
     console.log('📨 调用DO /create');
     const response = await gameState.fetch(new Request('http://do/create', {
       method: 'POST',
-      body: JSON.stringify(body)
+      body: JSON.stringify({ ...body, gameId }) // ✅ 传递gameId
     }));
     
     console.log('📥 DO响应状态:', response.status);
