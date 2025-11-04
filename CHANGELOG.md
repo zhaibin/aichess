@@ -1,5 +1,39 @@
 # 更新日志
 
+## [2.1.2] - 2025-11-04
+
+### SEO内容优化
+
+#### SEO策略调整
+- ✅ **突出AI优势**
+  - 强调5种强大AI棋手
+  - 从入门到大师级难度
+  - 不同风格的AI对手
+- ✅ **用户价值优先**
+  - 完全免费使用
+  - 全球11种语言支持
+  - 实时在线对战
+  - 游戏分析和回放
+- ✅ **去除技术描述**
+  - 移除Cloudflare Workers提及
+  - 移除底层技术栈介绍
+  - 聚焦用户体验和功能
+
+#### 11种语言全部更新
+每种语言的SEO内容都已优化：
+- Title突出"5种AI棋手"、"免费"
+- Description强调AI挑战、免费使用、全球访问
+- Keywords增加"智能象棋"、"AI对手"等
+
+#### 优化示例
+**简体中文**：
+- 旧：基于Cloudflare Workers的在线国际象棋...
+- 新：提供5种强大AI棋手在线对弈，从入门到大师级...
+
+**English**：
+- 旧：powered by Cloudflare Workers...
+- 新：Challenge 5 unique AI chess opponents from beginner to grandmaster...
+
 ## [2.1.1] - 2025-11-04
 
 ### SEO多语言增强
