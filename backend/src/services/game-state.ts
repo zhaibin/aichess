@@ -57,6 +57,7 @@ export class GameState extends DurableObject {
    */
   private async handleCreate(request: Request): Promise<Response> {
     const data: CreateGameRequest = await request.json();
+    console.log('📝 创建游戏请求:', data);
 
     const gameId = crypto.randomUUID();
     const now = Date.now();
