@@ -1466,6 +1466,9 @@ export function getFullHTMLTemplate(lang: Language): string {
       
       console.log('🤖 触发AI移动:', currentPlayer.name, '(' + gameState.currentTurn + ')', retryCount > 0 ? '[重试 ' + retryCount + ']' : '');
       
+      // ✅ AI vs AI模式也显示思考
+      showAIThinking(currentPlayer.name, 'thinking');
+      
       const moveStartTime = Date.now(); // 记录开始时间
       
       try {
@@ -1481,6 +1484,20 @@ export function getFullHTMLTemplate(lang: Language): string {
           const thinkingTime = Math.floor((moveEndTime - moveStartTime) / 1000);
           
           console.log('✅ AI移动成功，思考时间:', thinkingTime, '秒');
+          
+          // ✅ 显示AI思考结果
+          if (newState.aiAnalysis) {
+            showAIThinking(
+              currentPlayer.name,
+              'completed',
+              newState.aiAnalysis.phase,
+              newState.aiAnalysis.reasoning,
+              newState.aiAnalysis.evaluation,
+              newState.aiAnalysis.confidence
+            );
+          } else {
+            showAIThinking(currentPlayer.name, 'random');
+          }
           
           // ✅ 扣除实际思考时间
           currentPlayer.timeRemaining = Math.max(0, currentPlayer.timeRemaining - thinkingTime);

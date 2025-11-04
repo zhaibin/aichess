@@ -236,61 +236,25 @@ export async function getAIMove(
       const oppSecs = oppTime % 60;
       const timePressure = yourTime < 60 ? ' ⚠️TIME PRESSURE!' : yourTime < 180 ? ' ⏰' : '';
       
-      // 详细的阶段战略
-      const detailedStrategy = {
-        opening: `**OPENING PRIORITIES:**
-1. Control center (e4, d4, e5, d5) - Most critical
-2. Develop knights before bishops
-3. Castle by move 8-10 for king safety
-4. Don't move same piece twice
-5. Don't bring queen out early
-6. Connect rooks after castling`,
-        
-        middlegame: `**MIDDLEGAME PRIORITIES:**
-1. Look for tactical motifs (pins, forks, skewers, discovered attacks)
-2. Improve your worst-placed piece
-3. Control key squares and open files
-4. Create threats while staying safe
-5. Calculate forcing sequences 3-5 moves ahead
-6. Convert small advantages into winning positions`,
-        
-        endgame: `**ENDGAME PRIORITIES:**
-1. Activate your king (most important!)
-2. Create and push passed pawns
-3. Use opposition and zugzwang
-4. Calculate precisely to mate or draw
-5. Coordinate pieces for maximum effect
-6. Know basic endgame patterns`
+      // ✅ 战略提示（极简化）
+      const hints = {
+        opening: 'Control center, develop, castle',
+        middlegame: 'Tactics: forks/pins/skewers',
+        endgame: 'King+pawns, push to promote'
       };
       
-      const comprehensivePrompt = `You are ${model.role}, a Grandmaster (2800 ELO), playing ${colorName}.
+      // ✅ 超级简洁 - 完全避免"分析"关键词
+      const comprehensivePrompt = `${model.role}, ${colorName}, move ${gameState.moves.length + 1}, ${phase}
+Moves: ${pgnHistory || 'start'}
+Time: ${yourMins}:${yourSecs.toString().padStart(2,'0')}${timePressure}
+${hints[phase as keyof typeof hints]}
 
-**POSITION:**
-Move #${gameState.moves.length + 1}
-Phase: ${phase.toUpperCase()}
-Game History: ${pgnHistory || 'Opening position - no moves yet'}
-Time Remaining: You ${yourMins}:${yourSecs.toString().padStart(2,'0')}${timePressure} | Opponent ${oppMins}:${oppSecs.toString().padStart(2,'0')}
+Legal: ${moveList}${legalMoves.length > 25 ? '...' : ''}
 
-${detailedStrategy[phase as keyof typeof detailedStrategy]}
+JSON only:
+{"from":"e2","to":"e4","reason":"brief"}`;
 
-**YOUR LEGAL MOVES (choose from this list):**
-${moveList}${legalMoves.length > 25 ? ' +more' : ''}
 
-**ANALYSIS STEPS:**
-1. Quick Position Check: Material balance? King safety (yours and opponent's)? Any pieces under attack?
-2. Identify Tactics: Any checks, captures, or threats available? Look for pins, forks, skewers.
-3. Strategic Goals: What's the plan? Improve pieces? Control key squares? Create threats?
-4. Calculate: If I play this move, what's opponent's best reply? Can I handle it?
-5. Choose Best: Pick the move that gives maximum advantage or best practical chances.
-
-**RESPOND in JSON format:**
-{
-  "from": "source square (e.g. e2)",
-  "to": "target square (e.g. e4)",
-  "reason": "brief tactical/strategic reason (e.g. control center, develop knight, create fork)"
-}
-
-Your move (JSON only):`;
 
       console.log('📋 阶段:', phase, '角色:', model.role);
       console.log('📤 提示词长度:', comprehensivePrompt.length, '字符');
@@ -312,8 +276,8 @@ Your move (JSON only):`;
         // 参考: https://developers.cloudflare.com/workers-ai/models/
         const aiParams: any = {
           messages: messages,
-          response_format: { type: "json_object" }, // ✅ 文档标准参数
-          max_tokens: 150
+          response_format: { type: "json_object" },
+          max_tokens: 60 // ✅ 极小token，只够一个JSON对象
         };
         
         // 根据官方文档范围添加参数
