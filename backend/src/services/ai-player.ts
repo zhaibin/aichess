@@ -231,11 +231,11 @@ export async function getAIMove(
 }
 
 /**
- * 获取随机合法移动
+ * 获取随机合法移动（优化版：优先吃子）
  */
 function getRandomLegalMove(gameState: GameState): { from: string; to: string } | null {
   try {
-    console.log('🎲 生成随机合法移动, FEN:', gameState.fen);
+    console.log('🎲 生成智能随机移动, FEN:', gameState.fen);
     const chess = new ChessEngine(gameState.fen);
     const allMoves = chess.moves();
     console.log('📋 合法移动数量:', allMoves.length);
@@ -245,11 +245,41 @@ function getRandomLegalMove(gameState: GameState): { from: string; to: string } 
       return null;
     }
 
-    const randomMove = allMoves[Math.floor(Math.random() * allMoves.length)];
-    console.log('🎯 随机选择:', randomMove);
+    // 分类移动：吃子 vs 普通移动
+    const captureMoves: typeof allMoves = [];
+    const normalMoves: typeof allMoves = [];
+    
+    for (const move of allMoves) {
+      const fromSquare = chess.parseSquare ? chess.parseSquare(move.from) : null;
+      const toSquare = chess.parseSquare ? chess.parseSquare(move.to) : null;
+      
+      if (fromSquare && toSquare) {
+        const targetPiece = chess.get(move.to);
+        if (targetPiece) {
+          captureMoves.push(move);
+        } else {
+          normalMoves.push(move);
+        }
+      }
+    }
+    
+    console.log('📊 吃子移动:', captureMoves.length, '普通移动:', normalMoves.length);
+    
+    // 70%概率选择吃子，30%概率普通移动
+    let selectedMove;
+    if (captureMoves.length > 0 && Math.random() < 0.7) {
+      selectedMove = captureMoves[Math.floor(Math.random() * captureMoves.length)];
+      console.log('🎯 选择吃子:', selectedMove.from, '→', selectedMove.to, '吃', chess.get(selectedMove.to)?.type);
+    } else {
+      selectedMove = normalMoves.length > 0 
+        ? normalMoves[Math.floor(Math.random() * normalMoves.length)]
+        : allMoves[Math.floor(Math.random() * allMoves.length)];
+      console.log('🎯 选择普通移动:', selectedMove.from, '→', selectedMove.to);
+    }
+    
     return {
-      from: randomMove.from,
-      to: randomMove.to
+      from: selectedMove.from,
+      to: selectedMove.to
     };
   } catch (error) {
     console.error('❌ 随机移动生成失败:', error);
