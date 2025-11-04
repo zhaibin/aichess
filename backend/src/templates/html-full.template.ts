@@ -728,7 +728,14 @@ export function getFullHTMLTemplate(lang: Language): string {
     }
     
     async function makeMove(from, to) {
+      if (!gameState || !gameState.id) {
+        console.error('游戏未开始，无法调用API');
+        return;
+      }
+      
       try {
+        console.log('执行移动:', { gameId: gameState.id, from, to });
+        
         const response = await fetch('/api/make-move', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -740,9 +747,15 @@ export function getFullHTMLTemplate(lang: Language): string {
           chess = new Chess(gameState.fen);
           renderBoard();
           updateGameInfo();
+          console.log('移动成功');
+        } else {
+          const error = await response.json();
+          console.error('移动失败:', response.status, error);
+          alert(t('invalidMove') + ': ' + (error.error || '未知错误'));
         }
       } catch (error) {
         console.error('Move failed:', error);
+        alert(t('invalidMove'));
       }
     }
     

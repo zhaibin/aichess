@@ -47,22 +47,29 @@ export function validateCreateGameRequest(body: CreateGameRequest): ValidationRe
  * 验证移动请求
  */
 export function validateMakeMoveRequest(body: any): ValidationResult {
+  console.log('验证移动请求:', body);
+  
+  if (!body) {
+    return { valid: false, error: 'Request body is empty' };
+  }
+  
   if (!body.gameId || typeof body.gameId !== 'string') {
-    return { valid: false, error: 'Invalid game ID' };
+    return { valid: false, error: 'Invalid game ID: ' + JSON.stringify(body.gameId) };
   }
 
   if (!body.from || typeof body.from !== 'string' || body.from.length !== 2) {
-    return { valid: false, error: 'Invalid from square' };
+    return { valid: false, error: 'Invalid from square: ' + JSON.stringify(body.from) };
   }
 
   if (!body.to || typeof body.to !== 'string' || body.to.length !== 2) {
-    return { valid: false, error: 'Invalid to square' };
+    return { valid: false, error: 'Invalid to square: ' + JSON.stringify(body.to) };
   }
 
   if (body.promotion && !['q', 'r', 'b', 'n'].includes(body.promotion)) {
-    return { valid: false, error: 'Invalid promotion piece' };
+    return { valid: false, error: 'Invalid promotion piece: ' + JSON.stringify(body.promotion) };
   }
 
+  console.log('验证通过');
   return { valid: true };
 }
 
