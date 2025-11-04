@@ -216,11 +216,26 @@ export function getFullHTMLTemplate(lang: Language): string {
       padding: 15px;
       border-radius: 8px;
       background: #f5f5f5;
+      transition: all 0.3s ease;
+      border: 3px solid transparent;
     }
     
     .player-info.active {
       background: #e3f2fd;
-      border: 2px solid #2196f3;
+      border: 3px solid #2196f3;
+      animation: pulse-border 1.5s ease-in-out infinite;
+      box-shadow: 0 0 20px rgba(33, 150, 243, 0.4);
+    }
+    
+    @keyframes pulse-border {
+      0%, 100% {
+        border-color: #2196f3;
+        box-shadow: 0 0 20px rgba(33, 150, 243, 0.4);
+      }
+      50% {
+        border-color: #ff9800;
+        box-shadow: 0 0 30px rgba(255, 152, 0, 0.6);
+      }
     }
     
     .player-name {
@@ -775,7 +790,8 @@ export function getFullHTMLTemplate(lang: Language): string {
             console.log('✅ 棋子已选中:', squareName);
           } else if (piece && piece.color !== chess.turn) {
             console.log('❌ 不是当前回合的棋子！当前回合:', chess.turn === 'w' ? '白方' : '黑方', '你点击的是:', piece.color === 'w' ? '白棋' : '黑棋');
-            alert(t('yourTurn') + ': ' + (chess.turn === 'w' ? t('whitePlayer') : t('blackPlayer')));
+            // 不弹窗，通过闪烁提示
+            flashPlayerInfo(chess.turn);
           }
         }
         return;
@@ -815,7 +831,8 @@ export function getFullHTMLTemplate(lang: Language): string {
             console.log('✅ 棋子已选中:', squareName);
           } else if (piece && piece.color !== gameState.currentTurn) {
             console.log('❌ 不是你的回合！当前回合:', gameState.currentTurn === 'w' ? '白方(第1-2行)' : '黑方(第7-8行)');
-            alert('当前是' + (gameState.currentTurn === 'w' ? '白方' : '黑方') + '的回合！');
+            // 不弹窗，通过闪烁提示
+            flashPlayerInfo(gameState.currentTurn);
           }
         }
       }
@@ -950,15 +967,38 @@ export function getFullHTMLTemplate(lang: Language): string {
       updateTimer('white-timer', gameState.whitePlayer.timeRemaining);
       updateTimer('black-timer', gameState.blackPlayer.timeRemaining);
       
+      // 更新当前回合高亮（带闪烁动画）
+      const whiteInfo = document.getElementById('white-player-info');
+      const blackInfo = document.getElementById('black-player-info');
+      
       if (gameState.currentTurn === 'w') {
-        document.getElementById('white-player-info').classList.add('active');
-        document.getElementById('black-player-info').classList.remove('active');
+        whiteInfo.classList.add('active');
+        blackInfo.classList.remove('active');
       } else {
-        document.getElementById('white-player-info').classList.remove('active');
-        document.getElementById('black-player-info').classList.add('active');
+        whiteInfo.classList.remove('active');
+        blackInfo.classList.add('active');
       }
       
       updateMoveHistory();
+    }
+    
+    // 闪烁提示当前回合（替代弹窗）
+    function flashPlayerInfo(color) {
+      const infoEl = document.getElementById(color === 'w' ? 'white-player-info' : 'black-player-info');
+      if (!infoEl) return;
+      
+      // 快速闪烁3次
+      let count = 0;
+      const interval = setInterval(() => {
+        infoEl.style.transform = count % 2 === 0 ? 'scale(1.05)' : 'scale(1)';
+        infoEl.style.background = count % 2 === 0 ? '#fff3cd' : '#e3f2fd';
+        count++;
+        if (count > 6) {
+          clearInterval(interval);
+          infoEl.style.transform = 'scale(1)';
+          infoEl.style.background = '#e3f2fd';
+        }
+      }, 200);
     }
     
     function updateTimer(id, seconds) {
