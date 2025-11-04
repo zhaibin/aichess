@@ -492,25 +492,14 @@ function getSitemap(): string {
  */
 function getManifest(): string {
   return JSON.stringify({
-    name: 'AIChess - AI国际象棋',
+    name: 'AIChess - 智能国际象棋',
     short_name: 'AIChess',
-    description: '基于Cloudflare Workers的在线国际象棋对战平台',
+    description: '挑战5种强大AI棋手，完全免费的在线国际象棋平台',
     start_url: '/',
     display: 'standalone',
     background_color: '#667eea',
     theme_color: '#667eea',
-    icons: [
-      {
-        src: '/icon-192.png',
-        sizes: '192x192',
-        type: 'image/png'
-      },
-      {
-        src: '/icon-512.png',
-        sizes: '512x512',
-        type: 'image/png'
-      }
-    ]
+    icons: []
   }, null, 2);
 }
 
@@ -530,10 +519,9 @@ ${getSEOTags(lang)}
   
   <!-- PWA -->
   <meta name="theme-color" content="#667eea">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="/manifest.json">
-  <link rel="apple-touch-icon" href="/icon-192.png">
   
   <!-- 结构化数据 -->
   <script type="application/ld+json">
@@ -1083,7 +1071,7 @@ ${getSEOTags(lang)}
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/1.0.0-beta.8/chess.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/1.0.0-beta.8/chess.min.js" onload="onChessLibLoaded()"></script>
   <script>
     // 全局变量
     let gameState = null;
@@ -1092,6 +1080,7 @@ ${getSEOTags(lang)}
     let updateInterval = null;
     let aiModels = [];
     let currentLanguage = '${lang}'; // 使用服务器检测的语言
+    let chessLibLoaded = false;
 
     // Unicode棋子符号
     const pieceSymbols = {
@@ -1532,8 +1521,26 @@ ${getSEOTags(lang)}
       }
     };
 
+    // Chess.js库加载完成回调
+    function onChessLibLoaded() {
+      chessLibLoaded = true;
+      // 库加载后才初始化
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    }
+
     // 初始化
     async function init() {
+      // 确保Chess库已加载
+      if (typeof Chess === 'undefined') {
+        console.error('Chess.js not loaded yet');
+        setTimeout(init, 100);
+        return;
+      }
+
       await loadAIModels();
       
       // 设置语言选择器的当前值
@@ -1555,6 +1562,10 @@ ${getSEOTags(lang)}
 
     // 初始化空棋盘（等待开局）
     function initEmptyBoard() {
+      if (typeof Chess === 'undefined') {
+        console.error('Chess.js not loaded');
+        return;
+      }
       chess = new Chess();
       renderBoard();
     }
@@ -1644,7 +1655,21 @@ ${getSEOTags(lang)}
         'ko': '"새 게임" 버튼을 클릭하여 시작'
       };
       document.getElementById('welcome-text').textContent = welcomeTexts[currentLanguage] || welcomeTexts['en'];
-      document.getElementById('welcome-features').textContent = '🤖 5' + t('ai') + ' | 💯 ' + t('newGame') + ' | 🌍 11' + t('language');
+      
+      const featureTexts = {
+        'zh-CN': '🤖 5种AI棋手 | 💯 完全免费 | 🌍 11种语言',
+        'zh-TW': '🤖 5種AI棋手 | 💯 完全免費 | 🌍 11種語言',
+        'en': '🤖 5 AI Players | 💯 Free | 🌍 11 Languages',
+        'fr': '🤖 5 IA | 💯 Gratuit | 🌍 11 Langues',
+        'es': '🤖 5 IA | 💯 Gratis | 🌍 11 Idiomas',
+        'de': '🤖 5 KI | 💯 Kostenlos | 🌍 11 Sprachen',
+        'it': '🤖 5 IA | 💯 Gratuito | 🌍 11 Lingue',
+        'pt': '🤖 5 IA | 💯 Grátis | 🌍 11 Idiomas',
+        'ru': '🤖 5 ИИ | 💯 Бесплатно | 🌍 11 Языков',
+        'ja': '🤖 5つのAI | 💯 無料 | 🌍 11言語',
+        'ko': '🤖 5개 AI | 💯 무료 | 🌍 11개 언어'
+      };
+      document.getElementById('welcome-features').textContent = featureTexts[currentLanguage] || featureTexts['en'];
       
       // 更新游戏模式选项
       const gameModeSelect = document.getElementById('game-mode');
@@ -1955,8 +1980,8 @@ ${getSEOTags(lang)}
       }
     }
 
-    // 页面加载时初始化
-    init();
+    // Chess.js会在加载完成后自动调用onChessLibLoaded()
+    // 不需要在这里调用init()
   </script>
 </body>
 </html>`;
