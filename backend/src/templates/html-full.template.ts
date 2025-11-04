@@ -636,11 +636,21 @@ export function getFullHTMLTemplate(lang: Language): string {
         renderBoard();
         updateGameInfo();
         
-        // 开始轮询游戏状态
+        // 开始轮询游戏状态（只对AI vs AI模式）
         if (updateInterval) clearInterval(updateInterval);
-        updateInterval = setInterval(pollGameState, 1000);
+        if (gameState.mode === 'ai-vs-ai') {
+          // AI vs AI模式：需要轮询查看进展
+          updateInterval = setInterval(pollGameState, 1000);
+          console.log('AI vs AI模式，开始轮询');
+        }
         
         console.log('游戏开始，状态:', gameState.status, '当前回合:', gameState.currentTurn);
+        
+        // AI vs AI模式：触发第一步
+        if (gameState.mode === 'ai-vs-ai' && gameState.whitePlayer.type === 'ai') {
+          console.log('触发AI vs AI对战...');
+          setTimeout(() => pollGameState(), 500);
+        }
       } catch (error) {
         console.error('Failed to start game:', error);
         alert(t('invalidMove'));
@@ -794,6 +804,15 @@ export function getFullHTMLTemplate(lang: Language): string {
           renderBoard();
           updateGameInfo();
           console.log('移动成功');
+          
+          // 人机对战：人类移动后，立即请求AI移动
+          if (gameState.mode === 'human-vs-ai' && gameState.status === 'active') {
+            const nextPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
+            if (nextPlayer.type === 'ai') {
+              console.log('等待AI思考...');
+              await getAIMove();
+            }
+          }
         } else {
           const error = await response.json();
           console.error('移动失败:', response.status, error);
@@ -802,6 +821,30 @@ export function getFullHTMLTemplate(lang: Language): string {
       } catch (error) {
         console.error('Move failed:', error);
         alert(t('invalidMove'));
+      }
+    }
+    
+    async function getAIMove() {
+      try {
+        console.log('请求AI移动...');
+        const response = await fetch('/api/ai-move', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ gameId: gameState.id })
+        });
+        
+        if (response.ok) {
+          gameState = await response.json();
+          chess = new Chess(gameState.fen);
+          renderBoard();
+          updateGameInfo();
+          console.log('AI移动完成');
+        } else {
+          const error = await response.json();
+          console.error('AI移动失败:', error);
+        }
+      } catch (error) {
+        console.error('AI move failed:', error);
       }
     }
     

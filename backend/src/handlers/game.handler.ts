@@ -44,8 +44,9 @@ export async function handleCreateGame(
 
     const game = await response.json();
 
-    // AI vs AI游戏，发送到队列
+    // AI vs AI游戏，发送到队列启动
     if (body.mode === 'ai-vs-ai' && body.whitePlayerType === 'ai') {
+      console.log('AI vs AI游戏，发送首步到队列');
       await env.AI_GAME_QUEUE.send({
         gameId,
         currentPlayer: 'w'
@@ -119,21 +120,9 @@ export async function handleMakeMove(
 
     const game = await response.json();
 
-    // 如果是AI的回合，发送到队列
-    if (game.currentTurn && game.status === 'active') {
-      const currentPlayer = game.whitePlayer.type === 'ai' && game.currentTurn === 'w' 
-        ? game.whitePlayer 
-        : game.blackPlayer.type === 'ai' && game.currentTurn === 'b' 
-        ? game.blackPlayer 
-        : null;
-
-      if (currentPlayer?.type === 'ai') {
-        ctx.waitUntil(env.AI_GAME_QUEUE.send({
-          gameId,
-          currentPlayer: game.currentTurn
-        }));
-      }
-    }
+    // 不再自动发送到队列，由前端控制
+    // 人机对战：前端调用 /api/ai-move
+    // AI vs AI：前端轮询，后端队列自动处理
 
     return new Response(JSON.stringify(game), {
       headers: {

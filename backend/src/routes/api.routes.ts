@@ -1,7 +1,7 @@
 // API路由
 import { Env } from '../types';
 import { handleCreateGame, handleMakeMove, handleGameState } from '../handlers/game.handler';
-import { handleAIModels } from '../handlers/ai.handler';
+import { handleAIModels, handleAIMove } from '../handlers/ai.handler';
 import { CORS_HEADERS } from '../config/headers';
 
 /**
@@ -19,6 +19,7 @@ export async function apiRoutes(
   const routes: Record<string, (req: Request, env: Env, ctx: ExecutionContext) => Promise<Response>> = {
     '/api/create-game': handleCreateGame,
     '/api/make-move': handleMakeMove,
+    '/api/ai-move': handleAIMove,
     '/api/game-state': handleGameState,
     '/api/ai-models': handleAIModels,
     '/api/health': handleHealth
