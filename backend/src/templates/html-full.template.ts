@@ -502,9 +502,107 @@ export function getFullHTMLTemplate(lang: Language): string {
       border-color: #2196f3;
       transform: scale(1.1);
     }
+    
+    /* 胜利庆祝效果 */
+    .victory-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    
+    .victory-overlay.show { display: flex; }
+    
+    .victory-message {
+      background: white;
+      padding: 50px;
+      border-radius: 20px;
+      text-align: center;
+      animation: victoryPop 0.5s ease-out;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    
+    .victory-message h2 {
+      font-size: 3em;
+      color: #4caf50;
+      margin-bottom: 20px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .victory-message p {
+      font-size: 1.5em;
+      color: #666;
+      margin-bottom: 30px;
+    }
+    
+    .victory-message button {
+      background: #4caf50;
+      color: white;
+      padding: 15px 40px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.2em;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .victory-message button:hover {
+      background: #45a049;
+      transform: scale(1.05);
+    }
+    
+    @keyframes victoryPop {
+      0% {
+        transform: scale(0);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.1);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+    
+    /* 撒花效果 */
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #f44336;
+      animation: confetti-fall 3s linear infinite;
+    }
+    
+    @keyframes confetti-fall {
+      0% {
+        top: -10%;
+        opacity: 1;
+      }
+      100% {
+        top: 110%;
+        opacity: 0;
+        transform: rotate(720deg);
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- 胜利庆祝 -->
+  <div class="victory-overlay" id="victory-overlay">
+    <div class="victory-message">
+      <h2 id="victory-title">🎉 将死！</h2>
+      <p id="victory-text"></p>
+      <button onclick="location.reload()">再来一局</button>
+    </div>
+  </div>
   <!-- 升变选择对话框 -->
   <div class="promotion-dialog" id="promotion-dialog">
     <h3 id="promotion-title">选择升变棋子</h3>

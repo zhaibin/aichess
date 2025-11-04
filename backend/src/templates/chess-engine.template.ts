@@ -258,12 +258,60 @@ class ChessEngine {
     return moves;
   }
 
-  isCheck() { return false; }
-  isCheckmate() { return false; }
-  isDraw() { return false; }
-  isStalemate() { return false; }
-  isGameOver() { return this.moves().length === 0; }
+  isCheck() {
+    // 找到当前玩家的王
+    let kingPos = null;
+    for (let rank = 0; rank < 8; rank++) {
+      for (let file = 0; file < 8; file++) {
+        const piece = this._board[rank][file];
+        if (piece && piece.type === 'k' && piece.color === this.turn) {
+          kingPos = { file, rank };
+          break;
+        }
+      }
+      if (kingPos) break;
+    }
+    
+    if (!kingPos) return false;
+    
+    // 检查王是否被对方攻击
+    const opponent = this.turn === 'w' ? 'b' : 'w';
+    return this.isSquareAttacked(kingPos, opponent);
+  }
+  
+  isCheckmate() {
+    // 必须先被将军
+    if (!this.isCheck()) return false;
+    // 且没有任何合法移动
+    return this.moves().length === 0;
+  }
+  
+  isDraw() {
+    return this.isStalemate() || this.isInsufficientMaterial();
+  }
+  
+  isStalemate() {
+    // 没有被将军，但无合法移动
+    return !this.isCheck() && this.moves().length === 0;
+  }
+  
+  isInsufficientMaterial() {
+    // 简化版：只有王时为和棋
+    let pieceCount = 0;
+    for (let rank = 0; rank < 8; rank++) {
+      for (let file = 0; file < 8; file++) {
+        if (this._board[rank][file]) pieceCount++;
+      }
+    }
+    return pieceCount === 2; // 只剩两个王
+  }
+  
+  isGameOver() {
+    return this.isCheckmate() || this.isDraw();
+  }
+  
   history() { return this.moveHistory.map(m => m.san); }
+  
   undo() {
     const last = this.moveHistory.pop();
     if (last) this.turn = this.turn === 'w' ? 'b' : 'w';
