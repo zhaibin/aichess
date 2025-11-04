@@ -5,13 +5,14 @@
 ### Bug修复与代码清理
 
 #### Chess.js加载优化
-- ✅ **使用Cloudflare CDN稳定版本**
-  - chess.js@0.13.4（验证可用）
+- ✅ **使用Cloudflare CDN UMD版本**
+  - chess.js@0.12.0（UMD格式，浏览器兼容）
   - CDN: https://cdnjs.cloudflare.com
+  - v0.13.4+是ES模块格式（不兼容）
+  - v0.12.0是UMD格式（完美兼容）
   - CSP策略已允许cdnjs.cloudflare.com
   - 简洁直接的script标签加载
-  - 100%加载成功
-  - 代码精简：删除14行动态加载代码
+  - 无export语法错误
 
 #### 语法错误修复
 - ✅ **彻底清除重复翻译对象**
