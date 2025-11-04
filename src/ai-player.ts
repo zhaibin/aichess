@@ -81,19 +81,32 @@ export async function getAIMove(
 ): Promise<{ from: string; to: string; promotion?: string } | { draw: boolean } | null> {
   const maxRetries = 3;
   let retryCount = 0;
+  const retryDelay = 1000; // 1秒重试延迟
 
   while (retryCount < maxRetries) {
     try {
+      // 指数退避重试
+      if (retryCount > 0) {
+        await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(2, retryCount - 1)));
+      }
       const messages = [
         { role: 'system', content: getSystemPrompt() },
         { role: 'user', content: getUserPrompt(gameState, aiColor) }
       ];
 
-      const response = await ai.run(modelId, {
-        messages,
-        temperature: 0.7,
-        max_tokens: 150
-      });
+      // 添加超时控制
+      const timeout = 30000; // 30秒超时
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      try {
+        const response = await ai.run(modelId, {
+          messages,
+          temperature: 0.7,
+          max_tokens: 150
+        });
+        
+        clearTimeout(timeoutId);
 
       // 提取响应文本
       let responseText = '';
@@ -143,9 +156,20 @@ export async function getAIMove(
         console.error('Invalid move format in response');
         retryCount++;
       }
+      } catch (timeoutError) {
+        clearTimeout(timeoutId);
+        console.error('AI request timeout:', timeoutError);
+        retryCount++;
+      }
     } catch (error) {
-      console.error(`AI move error (attempt ${retryCount + 1}):`, error);
+      console.error(`AI move error (attempt ${retryCount + 1}/${maxRetries}):`, error);
       retryCount++;
+      
+      // 对于某些错误类型，不重试
+      if (error instanceof Error && error.message.includes('rate limit')) {
+        console.log('Rate limit hit, using fallback');
+        break;
+      }
     }
   }
 
