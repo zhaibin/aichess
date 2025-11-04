@@ -1,6 +1,6 @@
 // 静态资源路由
 import { Env } from '../types';
-import { getHTMLTemplate } from '../templates/html.template';
+import { getFullHTMLTemplate } from '../templates/html-full.template';
 import { getChessEngineScript } from '../templates/chess-engine.template';
 import { getLanguageFromURL } from '../utils/language';
 import { getResponseHeaders } from '../config/headers';
@@ -16,7 +16,7 @@ export async function staticRoutes(request: Request, env: Env): Promise<Response
   // 首页HTML
   if (path === '/' || path === '/index.html') {
     const lang = getLanguageFromURL(url);
-    const html = getHTMLTemplate(lang);
+    const html = getFullHTMLTemplate(lang);
     
     return new Response(html, {
       headers: {
