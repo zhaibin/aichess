@@ -236,28 +236,18 @@ export async function getAIMove(
       const oppSecs = oppTime % 60;
       const timePressure = yourTime < 60 ? ' ⚠️TIME PRESSURE!' : yourTime < 180 ? ' ⏰' : '';
       
-      const comprehensivePrompt = `You are ${model.role}, Grandmaster (2800 ELO), playing ${colorName}.
+      const comprehensivePrompt = `${model.role}, playing ${colorName}. Move ${gameState.moves.length + 1}, Phase: ${phase.toUpperCase()}
+History: ${pgnHistory || 'Start'}
+Time: You ${yourMins}:${yourSecs.toString().padStart(2,'0')}${timePressure} vs Opp ${oppMins}:${oppSecs.toString().padStart(2,'0')}
 
-**GAME STATE:**
-Move: ${gameState.moves.length + 1}
-Phase: ${phase.toUpperCase()}
-History: ${pgnHistory || 'Game start'}
-Time - You: ${yourMins}:${yourSecs.toString().padStart(2,'0')}${timePressure} | Opp: ${oppMins}:${oppSecs.toString().padStart(2,'0')}
+${phaseGuidance[phase as keyof typeof phaseGuidance]}
 
-**STRATEGY:** ${phaseGuidance[phase as keyof typeof phaseGuidance]}
+LEGAL MOVES: ${moveList}${legalMoves.length > 25 ? '...' : ''}
 
-**YOUR LEGAL MOVES (choose ONE):**
-${moveList}${legalMoves.length > 25 ? '...' : ''}
+CRITICAL: You MUST respond with ONLY a JSON object, no other text.
+Example: {"from":"e7","to":"e5","reason":"mirror center"}
 
-**TASK:**
-1. Analyze position quickly (material, king safety, tactics)
-2. Consider 2-3 best moves from the list
-3. Choose the strongest move
-
-**RESPOND in JSON:**
-{"from": "e2", "to": "e4", "reason": "control center, develop"}
-
-Your move:`;
+Choose your move from the list above and respond in JSON format NOW:`;
 
       console.log('📋 阶段:', phase, '角色:', model.role);
       console.log('📤 提示词长度:', comprehensivePrompt.length, '字符');
@@ -276,7 +266,8 @@ Your move:`;
         console.log('📤 调用env.AI.run...');
         response = await env.AI.run(model.modelId, {
           messages: messages,
-          max_tokens: 100 // 极小token，只需要JSON
+          max_tokens: 150, // 足够返回JSON
+          temperature: 0.3 // 降低温度，更确定性
         });
         console.log('📥 Workers AI响应成功');
         console.log('📥 完整响应:', JSON.stringify(response, null, 2));
