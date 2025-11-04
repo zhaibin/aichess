@@ -106,7 +106,23 @@ export function parseAIResponseByStyle(
     }
   }
   
+  // 最后尝试：正则直接提取坐标
+  const fromMatch = text.match(/"from"[:\s]*"([a-h][1-8])"/i);
+  const toMatch = text.match(/"to"[:\s]*"([a-h][1-8])"/i);
+  const reasonMatch = text.match(/"reason"[:\s]*"([^"]+)"/i);
+  
+  if (fromMatch && toMatch) {
+    moveData = {
+      from: fromMatch[1].toLowerCase(),
+      to: toMatch[1].toLowerCase(),
+      reason: reasonMatch ? reasonMatch[1] : ''
+    };
+    console.log('✅ 正则提取成功:', moveData);
+    return { success: true, move: moveData, reasoning: reasonMatch ? reasonMatch[1] : null, fullText: text };
+  }
+  
   console.error('❌ 所有解析策略都失败');
+  console.error('📝 完整响应:', text);
   return { success: false, move: null, reasoning: null, fullText: text };
 }
 

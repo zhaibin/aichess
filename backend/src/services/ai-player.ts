@@ -307,14 +307,43 @@ export async function getAIMove(
       // 系统提示词：根据模型特点定制
       const systemPrompt = getModelSpecificSystemPrompt(promptStyle, phase);
       
+      // 检测最近重复移动（防止死循环）
+      let recentMovesWarning = '';
+      if (gameState.moves.length >= 4) {
+        const last4 = gameState.moves.slice(-4);
+        const move1 = `${last4[0].from}${last4[0].to}`;
+        const move2 = `${last4[1].from}${last4[1].to}`;
+        const move3 = `${last4[2].from}${last4[2].to}`;
+        const move4 = `${last4[3].from}${last4[3].to}`;
+        
+        if (move1 === move3 && move2 === move4) {
+          recentMovesWarning = `\n⚠️ REPETITION DETECTED! Last 4 moves: ${move1} ${move2} ${move1} ${move2}
+DO NOT repeat! Choose a DIFFERENT move to avoid draw by repetition!`;
+        }
+      }
+      
+      // 最近3步详细历史
+      let recentDetail = '';
+      if (gameState.moves.length > 0) {
+        const start = Math.max(0, gameState.moves.length - 3);
+        for (let i = start; i < gameState.moves.length; i++) {
+          const m = gameState.moves[i];
+          const player = i % 2 === 0 ? 'White' : 'Black';
+          recentDetail += `${Math.floor(i/2)+1}.${player[0]} ${m.from}→${m.to} `;
+        }
+      }
+      
       // 用户提示词：棋局信息
       const userPrompt = `${model.role} playing ${colorName}.
 Move: ${gameState.moves.length + 1} (${phase.toUpperCase()})
-History: ${pgnHistory || 'game start'}
+Full History: ${pgnHistory || 'game start'}
+Recent: ${recentDetail || 'none'}${recentMovesWarning}
 Time: ${yourMins}:${yourSecs.toString().padStart(2,'0')}${timePressure} vs ${oppMins}:${oppSecs.toString().padStart(2,'0')}
 
-LEGAL MOVES (choose ONE from this list):
-${moveList}${legalMoves.length > 25 ? ' +more' : ''}`;
+LEGAL MOVES (choose ONE from this list, MUST be from this list):
+${moveList}${legalMoves.length > 25 ? ' +more' : ''}
+
+CRITICAL: Your move MUST be from the legal moves list above!`;
 
       console.log('📋 阶段:', phase, '提示词风格:', promptStyle);
       console.log('📤 System长度:', systemPrompt.length, 'User长度:', userPrompt.length);
@@ -416,6 +445,27 @@ ${moveList}${legalMoves.length > 25 ? ' +more' : ''}`;
       if (result.success) {
         console.log('✅ AI移动合法');
         
+        // ✅ 检查是否与最近移动重复（防止死循环）
+        if (gameState.moves.length >= 2) {
+          const lastMove = gameState.moves[gameState.moves.length - 1];
+          const last2Move = gameState.moves[gameState.moves.length - 2];
+          
+          // 检查是否重复最后一步
+          if (moveData.from === lastMove.to && moveData.to === lastMove.from) {
+            console.warn('⚠️ AI试图重复最后一步（可能死循环），拒绝此移动');
+            continue; // 重试
+          }
+          
+          // 检查是否重复倒数第二步
+          if (gameState.moves.length >= 4) {
+            const last4Move = gameState.moves[gameState.moves.length - 4];
+            if (moveData.from === last2Move.from && moveData.to === last2Move.to) {
+              console.warn('⚠️ AI重复之前的移动（可能形成循环），拒绝');
+              continue; // 重试
+            }
+          }
+        }
+        
         // ✅ 附加分析信息
         const phase = getGamePhase(gameState.moves.length);
         moveData.analysis = {
@@ -428,7 +478,7 @@ ${moveList}${legalMoves.length > 25 ? ' +more' : ''}`;
         
         return moveData;
       } else {
-        console.warn('❌ AI移动不合法:', moveData);
+        console.warn('❌ AI移动不合法:', moveData, '原因:', result.error || '未知');
       }
 
     } catch (error) {
