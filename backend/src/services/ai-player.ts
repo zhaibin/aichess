@@ -2,6 +2,7 @@
 import { ChessEngine } from './chess-engine';
 import { GameState } from '../types';
 import { AI_MODELS } from '../config/constants';
+import { getGrandmasterSystemPrompt, getStructuredUserPrompt, parseAIResponse, getGamePhase } from './ai-prompts';
 
 /**
  * 生成AI棋手的系统提示词（角色预设版）
@@ -193,15 +194,14 @@ export async function getAIMove(
     try {
       console.log(`🤖 AI调用 (尝试 ${attempt + 1}/${maxRetries})`);
       
-      const systemPrompt = getSystemPrompt();
-      const userPrompt = getUserPrompt(gameState);
+      // ✅ 使用新的结构化提示词
+      const phase = getGamePhase(gameState.moves.length);
+      const systemPrompt = getGrandmasterSystemPrompt(model.role || 'a chess Grandmaster');
+      const userPrompt = getStructuredUserPrompt(gameState, model.role || 'Grandmaster');
       
-      // 🔍 日志：显示完整提示词
-      console.log('📤 系统提示词长度:', systemPrompt.length, '字符');
-      console.log('📤 用户提示词:');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log(userPrompt);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('📋 游戏阶段:', phase);
+      console.log('📋 AI角色:', model.role);
+      console.log('📤 提示词长度:', systemPrompt.length + userPrompt.length, '字符');
       
       const messages = [
         { role: 'system', content: systemPrompt },
@@ -209,30 +209,18 @@ export async function getAIMove(
       ];
 
       console.log('📤 发送到Workers AI, 模型:', model.modelId);
-      console.log('📤 API类型:', model.type);
+      console.log('📤 配置: temp=' + model.temperature + ', maxTokens=' + model.maxTokens);
       
-      // ✅ 根据模型类型使用正确的API格式
+      // ✅ 使用模型配置的参数
       let response;
-      
-      if (model.type === 'instructions') {
-        // GPT-OSS使用instructions+input格式
-        console.log('📤 使用instructions格式');
-        
-        response = await env.AI.run(model.modelId, {
-          instructions: systemPrompt,
-          input: userPrompt
-        });
-      } else {
-        // 其他模型使用messages格式
-        console.log('📤 使用messages格式');
-        response = await env.AI.run(model.modelId, {
-          messages: messages
-        });
-      }
+      response = await env.AI.run(model.modelId, {
+        messages: messages,
+        temperature: model.temperature,
+        max_tokens: model.maxTokens
+      });
       
       console.log('📥 Workers AI响应类型:', typeof response);
       console.log('📥 Workers AI响应keys:', Object.keys(response || {}));
-      console.log('📥 完整响应:', JSON.stringify(response, null, 2).substring(0, 500));
 
       // 提取响应（多种可能的格式）
       let aiResponse = '';
