@@ -307,14 +307,37 @@ Your move (JSON only):`;
       
       try {
         console.log('📤 调用env.AI.run...');
+        
+        // ✅ JSON Schema定义 - 更严格的约束
+        const moveSchema = {
+          type: "object",
+          properties: {
+            from: {
+              type: "string",
+              description: "Source square in chess notation (e.g., 'e2')",
+              pattern: "^[a-h][1-8]$"
+            },
+            to: {
+              type: "string", 
+              description: "Target square in chess notation (e.g., 'e4')",
+              pattern: "^[a-h][1-8]$"
+            },
+            reason: {
+              type: "string",
+              description: "Brief tactical or strategic reason for the move"
+            }
+          },
+          required: ["from", "to", "reason"]
+        };
+        
         response = await env.AI.run(model.modelId, {
           messages: messages,
-          response_format: { type: "json_object" }, // ✅ 强制JSON输出！
+          guided_json: moveSchema, // ✅ 使用guided_json而非response_format
           max_tokens: 150,
-          temperature: 0.3,
-          top_p: 0.9, // 控制创造性
-          repetition_penalty: 1.1, // 减少重复
-          frequency_penalty: 0.5 // 避免重复相同行
+          temperature: model.temperature || 0.3,
+          top_p: model.topP || 0.9,
+          repetition_penalty: model.repetitionPenalty || 1.1,
+          frequency_penalty: model.frequencyPenalty || 0.5
         });
         console.log('📥 Workers AI响应成功');
         console.log('📥 完整响应:', JSON.stringify(response, null, 2));
