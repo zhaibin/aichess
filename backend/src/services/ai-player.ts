@@ -236,18 +236,61 @@ export async function getAIMove(
       const oppSecs = oppTime % 60;
       const timePressure = yourTime < 60 ? ' ⚠️TIME PRESSURE!' : yourTime < 180 ? ' ⏰' : '';
       
-      const comprehensivePrompt = `${model.role}, playing ${colorName}. Move ${gameState.moves.length + 1}, Phase: ${phase.toUpperCase()}
-History: ${pgnHistory || 'Start'}
-Time: You ${yourMins}:${yourSecs.toString().padStart(2,'0')}${timePressure} vs Opp ${oppMins}:${oppSecs.toString().padStart(2,'0')}
+      // 详细的阶段战略
+      const detailedStrategy = {
+        opening: `**OPENING PRIORITIES:**
+1. Control center (e4, d4, e5, d5) - Most critical
+2. Develop knights before bishops
+3. Castle by move 8-10 for king safety
+4. Don't move same piece twice
+5. Don't bring queen out early
+6. Connect rooks after castling`,
+        
+        middlegame: `**MIDDLEGAME PRIORITIES:**
+1. Look for tactical motifs (pins, forks, skewers, discovered attacks)
+2. Improve your worst-placed piece
+3. Control key squares and open files
+4. Create threats while staying safe
+5. Calculate forcing sequences 3-5 moves ahead
+6. Convert small advantages into winning positions`,
+        
+        endgame: `**ENDGAME PRIORITIES:**
+1. Activate your king (most important!)
+2. Create and push passed pawns
+3. Use opposition and zugzwang
+4. Calculate precisely to mate or draw
+5. Coordinate pieces for maximum effect
+6. Know basic endgame patterns`
+      };
+      
+      const comprehensivePrompt = `You are ${model.role}, a Grandmaster (2800 ELO), playing ${colorName}.
 
-${phaseGuidance[phase as keyof typeof phaseGuidance]}
+**POSITION:**
+Move #${gameState.moves.length + 1}
+Phase: ${phase.toUpperCase()}
+Game History: ${pgnHistory || 'Opening position - no moves yet'}
+Time Remaining: You ${yourMins}:${yourSecs.toString().padStart(2,'0')}${timePressure} | Opponent ${oppMins}:${oppSecs.toString().padStart(2,'0')}
 
-LEGAL MOVES: ${moveList}${legalMoves.length > 25 ? '...' : ''}
+${detailedStrategy[phase as keyof typeof detailedStrategy]}
 
-CRITICAL: You MUST respond with ONLY a JSON object, no other text.
-Example: {"from":"e7","to":"e5","reason":"mirror center"}
+**YOUR LEGAL MOVES (choose from this list):**
+${moveList}${legalMoves.length > 25 ? ' +more' : ''}
 
-Choose your move from the list above and respond in JSON format NOW:`;
+**ANALYSIS STEPS:**
+1. Quick Position Check: Material balance? King safety (yours and opponent's)? Any pieces under attack?
+2. Identify Tactics: Any checks, captures, or threats available? Look for pins, forks, skewers.
+3. Strategic Goals: What's the plan? Improve pieces? Control key squares? Create threats?
+4. Calculate: If I play this move, what's opponent's best reply? Can I handle it?
+5. Choose Best: Pick the move that gives maximum advantage or best practical chances.
+
+**RESPOND in JSON format:**
+{
+  "from": "source square (e.g. e2)",
+  "to": "target square (e.g. e4)",
+  "reason": "brief tactical/strategic reason (e.g. control center, develop knight, create fork)"
+}
+
+Your move (JSON only):`;
 
       console.log('📋 阶段:', phase, '角色:', model.role);
       console.log('📤 提示词长度:', comprehensivePrompt.length, '字符');
