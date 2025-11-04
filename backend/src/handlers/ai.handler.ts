@@ -121,6 +121,20 @@ export async function handleAIMove(
     }
 
     const updatedGame = await moveResponse.json();
+    
+    // ✅ 附加AI分析信息（如果有）
+    console.log('📊 AI分析数据:', aiMove.analysis);
+    if (aiMove.analysis) {
+      updatedGame.aiAnalysis = {
+        phase: aiMove.analysis.phase || 'UNKNOWN',
+        reasoning: aiMove.analysis.reasoning || '移动完成',
+        evaluation: aiMove.analysis.evaluation || '-',
+        confidence: aiMove.analysis.confidence || '-'
+      };
+      console.log('✅ 已附加AI分析到响应');
+    } else {
+      console.log('⚠️ AI没有返回分析数据');
+    }
 
     return new Response(JSON.stringify(updatedGame), {
       headers: {
