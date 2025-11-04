@@ -4,6 +4,15 @@
 
 ### Bug修复与代码清理
 
+#### Chess.js本地化
+- ✅ **完全本地化chess.js库**
+  - npm install chess.js@1.4.0
+  - 打包到Workers中（不依赖外部CDN）
+  - 通过/chess.js路由提供
+  - 浏览器端直接引用本地路由
+  - 彻底解决CDN 404问题
+  - Workers大小：102KB → 199KB（包含chess.js）
+
 #### 语法错误修复
 - ✅ **彻底清除重复翻译对象**
   - 删除405行残留翻译代码
