@@ -261,6 +261,22 @@ export function getFullHTMLTemplate(lang: Language): string {
       color: #666;
     }
     
+    .move-item {
+      padding: 8px;
+      margin-bottom: 5px;
+      background: white;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .move-number {
+      font-weight: bold;
+      color: #666;
+      min-width: 30px;
+    }
+    
     /* 欢迎消息 */
     .welcome-message {
       text-align: center;
@@ -721,6 +737,7 @@ export function getFullHTMLTemplate(lang: Language): string {
           if (result) {
             console.log('练习移动成功');
             renderBoard();
+            updateMoveHistory(); // 更新行棋历史
           }
           selectedSquare = null;
           clearHighlights();
@@ -745,6 +762,7 @@ export function getFullHTMLTemplate(lang: Language): string {
             console.log('本地移动成功:', result);
             renderBoard();
             gameState.currentTurn = chess.turn;
+            updateMoveHistory(); // 更新行棋历史
           }
           selectedSquare = null;
           clearHighlights();
@@ -960,15 +978,46 @@ export function getFullHTMLTemplate(lang: Language): string {
     
     function updateMoveHistory() {
       const moveList = document.getElementById('move-list');
-      if (!moveList || !gameState.moves) return;
+      console.log('更新行棋历史, moveList元素:', !!moveList, 'moves数量:', gameState?.moves?.length);
       
+      if (!moveList) {
+        console.error('❌ move-list元素未找到');
+        return;
+      }
+      
+      // 本地模式：显示chess引擎的历史
+      if (!gameState || !gameState.moves || gameState.moves.length === 0) {
+        if (chess && chess.history) {
+          const history = chess.history();
+          console.log('使用chess引擎历史:', history);
+          moveList.innerHTML = '';
+          for (let i = 0; i < history.length; i++) {
+            const moveEl = document.createElement('div');
+            moveEl.className = 'move-item';
+            moveEl.innerHTML = '<span class="move-number">' + (Math.floor(i/2) + 1) + '.</span> ' + history[i];
+            moveList.appendChild(moveEl);
+          }
+        } else {
+          moveList.innerHTML = '<div style="color: #999;">暂无移动</div>';
+        }
+        return;
+      }
+      
+      // 游戏模式：显示gameState的历史
+      console.log('使用gameState历史:', gameState.moves);
       moveList.innerHTML = '';
       for (let i = 0; i < gameState.moves.length; i++) {
         const move = gameState.moves[i];
         const moveEl = document.createElement('div');
-        moveEl.textContent = (Math.floor(i/2) + 1) + '. ' + move.san;
+        moveEl.className = 'move-item';
+        const moveNum = Math.floor(i/2) + 1;
+        const color = i % 2 === 0 ? '⚪' : '⚫';
+        moveEl.innerHTML = '<span class="move-number">' + moveNum + '.</span> ' + color + ' ' + move.san;
         moveList.appendChild(moveEl);
       }
+      
+      // 自动滚动到底部
+      moveList.scrollTop = moveList.scrollHeight;
     }
     
     async function resign() {
