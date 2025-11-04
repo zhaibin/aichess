@@ -680,10 +680,29 @@ export function getFullHTMLTemplate(lang: Language): string {
     }
     
     function handleSquareClick(square) {
-      if (!gameState || gameState.status !== 'active') return;
-      
       const squareName = square.dataset.square;
       
+      // 如果还没有开始游戏，允许自由移动（练习模式）
+      if (!gameState || gameState.status !== 'active') {
+        if (selectedSquare) {
+          // 尝试移动
+          const result = chess.move({ from: selectedSquare, to: squareName });
+          if (result) {
+            renderBoard();
+          }
+          selectedSquare = null;
+          clearHighlights();
+        } else {
+          const piece = chess.get(squareName);
+          if (piece && piece.color === chess.turn) {
+            selectedSquare = squareName;
+            highlightSquare(square);
+          }
+        }
+        return;
+      }
+      
+      // 游戏进行中，调用API
       if (selectedSquare) {
         makeMove(selectedSquare, squareName);
         selectedSquare = null;
@@ -728,13 +747,18 @@ export function getFullHTMLTemplate(lang: Language): string {
     }
     
     async function pollGameState() {
-      if (!gameState) return;
+      if (!gameState || !gameState.id) return;
       
       try {
         const response = await fetch('/api/game-state?gameId=' + gameState.id);
+        if (!response.ok) {
+          console.error('Poll failed with status:', response.status);
+          return;
+        }
+        
         const newState = await response.json();
         
-        if (newState.fen !== gameState.fen) {
+        if (newState && newState.fen && newState.fen !== gameState.fen) {
           gameState = newState;
           chess = new Chess(gameState.fen);
           renderBoard();
@@ -746,8 +770,16 @@ export function getFullHTMLTemplate(lang: Language): string {
     }
     
     function updateGameInfo() {
-      document.getElementById('white-player-name').textContent = gameState.whitePlayer.name;
-      document.getElementById('black-player-name').textContent = gameState.blackPlayer.name;
+      if (!gameState || !gameState.whitePlayer || !gameState.blackPlayer) {
+        console.error('游戏状态不完整');
+        return;
+      }
+      
+      const whiteNameEl = document.getElementById('white-player-name');
+      const blackNameEl = document.getElementById('black-player-name');
+      
+      if (whiteNameEl) whiteNameEl.textContent = gameState.whitePlayer.name || t('whitePlayer');
+      if (blackNameEl) blackNameEl.textContent = gameState.blackPlayer.name || t('blackPlayer');
       
       updateTimer('white-timer', gameState.whitePlayer.timeRemaining);
       updateTimer('black-timer', gameState.blackPlayer.timeRemaining);
