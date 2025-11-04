@@ -595,29 +595,46 @@ export class ChessEngine {
   }
 
   /**
-   * 检查是否子力不足
+   * 检查是否子力不足（完善版）
    */
   private isInsufficientMaterial(): boolean {
-    let pieces = 0;
-    let knights = 0;
-    let bishops = 0;
-
+    // 统计棋子
+    let whitePieces = { k: 0, q: 0, r: 0, b: 0, n: 0, p: 0 };
+    let blackPieces = { k: 0, q: 0, r: 0, b: 0, n: 0, p: 0 };
+    
     for (let rank = 0; rank < 8; rank++) {
       for (let file = 0; file < 8; file++) {
         const piece = this.board[rank][file];
         if (piece) {
-          pieces++;
-          if (piece.type === 'n') knights++;
-          if (piece.type === 'b') bishops++;
-          if (piece.type === 'p' || piece.type === 'r' || piece.type === 'q') {
-            return false; // 有兵、车或后，不是子力不足
+          if (piece.color === 'w') {
+            whitePieces[piece.type as keyof typeof whitePieces]++;
+          } else {
+            blackPieces[piece.type as keyof typeof blackPieces]++;
           }
         }
       }
     }
-
-    // 只有王、或王+马、或王+象
-    return pieces <= 3 && knights + bishops <= 1;
+    
+    // 如果有兵、车或后，不可能子力不足
+    if (whitePieces.p > 0 || whitePieces.r > 0 || whitePieces.q > 0) return false;
+    if (blackPieces.p > 0 || blackPieces.r > 0 || blackPieces.q > 0) return false;
+    
+    const totalPieces = Object.values(whitePieces).reduce((a, b) => a + b, 0) + 
+                        Object.values(blackPieces).reduce((a, b) => a + b, 0);
+    
+    // 1. 王 vs 王
+    if (totalPieces === 2) return true;
+    
+    // 2. 王+马 vs 王 或 王 vs 王+马
+    if (totalPieces === 3 && (whitePieces.n === 1 || blackPieces.n === 1)) return true;
+    
+    // 3. 王+象 vs 王 或 王 vs 王+象
+    if (totalPieces === 3 && (whitePieces.b === 1 || blackPieces.b === 1)) return true;
+    
+    // 4. 王+象 vs 王+象（同色格象）
+    if (totalPieces === 4 && whitePieces.b === 1 && blackPieces.b === 1) return true;
+    
+    return false;
   }
 
   /**
