@@ -220,7 +220,7 @@ export default {
 
         console.log(`AI moved: ${aiMoveResult.from}${aiMoveResult.to}`);
 
-        // 如果游戏继续且对手也是AI，继续队列
+          // 如果游戏继续且对手也是AI，继续队列
         if (updatedGame.status === 'active') {
           const nextPlayer = updatedGame.currentTurn;
           const nextPlayerObj = nextPlayer === 'w' ? updatedGame.whitePlayer : updatedGame.blackPlayer;
@@ -234,7 +234,7 @@ export default {
         }
 
         message.ack();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Queue processing error:', error);
         message.retry();
       }
@@ -1686,6 +1686,13 @@ ${getSEOTags(lang)}
 
     // 开始游戏
     async function startGame() {
+      // 确保Chess库已加载
+      if (typeof Chess === 'undefined') {
+        alert('正在加载象棋引擎，请稍候...');
+        setTimeout(startGame, 500);
+        return;
+      }
+
       const mode = document.getElementById('game-mode').value;
       const timeControl = parseInt(document.getElementById('time-control').value);
       
@@ -1734,7 +1741,20 @@ ${getSEOTags(lang)}
         updateInterval = setInterval(pollGameState, 1000);
       } catch (error) {
         console.error('Failed to start game:', error);
-        alert('Failed to start game');
+        const errorMsg = {
+          'zh-CN': '启动游戏失败，请重试',
+          'zh-TW': '啟動遊戲失敗，請重試',
+          'en': 'Failed to start game, please try again',
+          'fr': 'Échec du démarrage, réessayez',
+          'es': 'Error al iniciar, inténtalo de nuevo',
+          'de': 'Spielstart fehlgeschlagen, bitte erneut versuchen',
+          'it': 'Avvio fallito, riprova',
+          'pt': 'Falha ao iniciar, tente novamente',
+          'ru': 'Ошибка запуска, попробуйте снова',
+          'ja': 'ゲーム開始失敗、再試行してください',
+          'ko': '게임 시작 실패, 다시 시도하세요'
+        };
+        alert(errorMsg[currentLanguage] || errorMsg['en']);
       }
     }
 
@@ -1762,6 +1782,11 @@ ${getSEOTags(lang)}
 
     // 渲染棋盘
     function renderBoard() {
+      if (!chess || typeof Chess === 'undefined') {
+        console.log('Chess not ready, skipping render');
+        return;
+      }
+
       const board = document.getElementById('chessboard');
       board.innerHTML = '';
       
@@ -1789,7 +1814,8 @@ ${getSEOTags(lang)}
 
     // 处理方格点击
     async function handleSquareClick(square) {
-      if (gameState.status !== 'active') return;
+      if (!gameState || gameState.status !== 'active') return;
+      if (!chess || typeof Chess === 'undefined') return;
       
       const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
       if (currentPlayer.type === 'ai') return;
@@ -1957,8 +1983,9 @@ ${getSEOTags(lang)}
       renderBoard();
       
       // 清空信息面板
-      document.getElementById('white-player-name').textContent = '白方';
-      document.getElementById('black-player-name').textContent = '黑方';
+      const t = (key) => translations[currentLanguage][key] || key;
+      document.getElementById('white-player-name').textContent = t('whitePlayer');
+      document.getElementById('black-player-name').textContent = t('blackPlayer');
       document.getElementById('white-timer').textContent = '10:00';
       document.getElementById('black-timer').textContent = '10:00';
       document.getElementById('move-list').innerHTML = '';
