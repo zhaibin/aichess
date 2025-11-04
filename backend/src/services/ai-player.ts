@@ -339,8 +339,8 @@ Your move:`;
       console.log('💭 AI推理:', reasonText);
 
       // 验证移动合法性
-      const chess = new ChessEngine(gameState.fen);
-      const result = chess.makeMove(moveData.from, moveData.to, moveData.promotion);
+      const chessValidator = new ChessEngine(gameState.fen);
+      const result = chessValidator.makeMove(moveData.from, moveData.to, moveData.promotion);
 
       if (result.success) {
         console.log('✅ AI移动合法');
