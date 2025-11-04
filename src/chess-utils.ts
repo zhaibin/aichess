@@ -1,11 +1,12 @@
 // 国际象棋工具类（使用chess.js库）
-import { Chess } from 'chess.js';
+// 注意：在Workers环境中，chess.js需要在浏览器端加载
 
 export class ChessGame {
-  private chess: Chess;
+  private chess: any; // 使用any因为是浏览器端的Chess对象
 
   constructor(fen?: string) {
-    this.chess = fen ? new Chess(fen) : new Chess();
+    // 这个类在服务器端用于类型定义，实际chess逻辑在浏览器端
+    this.chess = null;
   }
 
   /**
@@ -82,38 +83,52 @@ export class ChessGame {
   }
 
   /**
+   * 获取棋盘（返回null，浏览器端实现）
+   */
+  board(): any {
+    return null;
+  }
+
+  /**
+   * 获取某个位置的棋子
+   */
+  get(square: string): any {
+    return null;
+  }
+
+  /**
    * 获取棋盘ASCII表示
    */
   getAscii(): string {
-    return this.chess.ascii();
+    return '';
   }
 
   /**
    * 获取移动历史
    */
   getHistory(): string[] {
-    return this.chess.history();
+    return [];
   }
 
   /**
    * 撤销移动
    */
   undo() {
-    return this.chess.undo();
+    return null;
   }
 
   /**
    * 从PGN加载游戏
    */
   loadPgn(pgn: string): boolean {
-    return this.chess.loadPgn(pgn);
+    return false;
   }
 
   /**
    * 获取PGN
    */
   getPgn(): string {
-    return this.chess.pgn();
+    return '';
   }
 }
 

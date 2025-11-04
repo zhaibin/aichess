@@ -1071,7 +1071,7 @@ ${getSEOTags(lang)}
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/1.0.0-beta.8/chess.min.js" onload="onChessLibLoaded()"></script>
+  <script src="https://unpkg.com/chess.js@0.10.3/chess.min.js" onload="onChessLibLoaded()" onerror="onChessLibError()"></script>
   <script>
     // 全局变量
     let gameState = null;
@@ -1523,6 +1523,7 @@ ${getSEOTags(lang)}
 
     // Chess.js库加载完成回调
     function onChessLibLoaded() {
+      console.log('Chess.js loaded successfully');
       chessLibLoaded = true;
       // 库加载后才初始化
       if (document.readyState === 'loading') {
@@ -1530,6 +1531,12 @@ ${getSEOTags(lang)}
       } else {
         init();
       }
+    }
+
+    // Chess.js库加载失败回调
+    function onChessLibError() {
+      console.error('Failed to load Chess.js from CDN');
+      alert('无法加载象棋引擎，请刷新页面重试');
     }
 
     // 初始化
