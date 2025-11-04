@@ -5,20 +5,28 @@ import { GameState, Move, Player, Env, CreateGameRequest } from '../types';
 
 export class GameState extends DurableObject {
   private state: DurableObjectState;
-  private game: GameState | null = null;
+  private game: any = null;
   private timers: Map<string, number> = new Map();
 
   constructor(state: DurableObjectState, env: Env) {
     super(state, env);
     this.state = state;
+    console.log('🔧 GameState DO构造函数');
   }
 
   /**
    * 处理HTTP请求
    */
   async fetch(request: Request): Promise<Response> {
+    // 每次请求前尝试恢复状态
+    if (!this.game) {
+      this.game = await this.state.storage.get('game');
+      console.log('🔄 DO恢复状态:', this.game ? this.game.id : 'null');
+    }
+    
     const url = new URL(request.url);
     const path = url.pathname;
+    console.log('📨 DO收到请求:', path, '游戏存在:', !!this.game);
 
     try {
       // 加载游戏状态
