@@ -199,43 +199,72 @@ export async function getAIMove(
     try {
       console.log(`🤖 AI调用 (尝试 ${attempt + 1}/${maxRetries})`);
       
-      // ✅ 极简提示词 - 直接要求JSON格式
-      const phase = getGamePhase(gameState.moves.length);
-      
       // ✅ 获取所有合法移动
       const chess = new ChessEngine(gameState.fen);
       const legalMoves = chess.moves();
       console.log('📋 合法移动数:', legalMoves.length);
       
-      // 转换为简洁列表（前20个）
-      const moveList = legalMoves.slice(0, 20).map(m => `${m.from}→${m.to}`).join(', ');
+      // 转换为编号列表
+      const moveList = legalMoves.slice(0, 25).map((m, i) => `${i+1}.${m.from}→${m.to}`).join(' ');
       
-      // 获取最近3步
-      let recentMoves = '';
+      // 游戏阶段判断
+      const phase = getGamePhase(gameState.moves.length);
+      
+      // 阶段指导
+      const phaseGuidance = {
+        opening: 'Opening: Control center (e4,d4), develop pieces, castle early',
+        middlegame: 'Middlegame: Find tactics (pins/forks), improve pieces, create threats',
+        endgame: 'Endgame: Activate king, push pawns, precise calculation'
+      };
+      
+      // 完整历史（PGN格式）
+      let pgnHistory = '';
       if (gameState.moves.length > 0) {
-        const start = Math.max(0, gameState.moves.length - 3);
-        for (let i = start; i < gameState.moves.length; i++) {
-          recentMoves += gameState.moves[i].from + gameState.moves[i].to + ' ';
+        for (let i = 0; i < gameState.moves.length; i++) {
+          const moveNum = Math.floor(i / 2) + 1;
+          const color = i % 2 === 0 ? 'White' : 'Black';
+          pgnHistory += `${moveNum}.${color[0]} ${gameState.moves[i].from}${gameState.moves[i].to} `;
         }
       }
       
-      const simplePrompt = `You are ${model.role}, playing as ${colorName}.
+      // 时间信息
+      const yourTime = currentPlayer.timeRemaining || 600;
+      const oppTime = (gameState.currentTurn === 'w' ? gameState.blackPlayer : gameState.whitePlayer).timeRemaining || 600;
+      const yourMins = Math.floor(yourTime / 60);
+      const yourSecs = yourTime % 60;
+      const oppMins = Math.floor(oppTime / 60);
+      const oppSecs = oppTime % 60;
+      const timePressure = yourTime < 60 ? ' ⚠️TIME PRESSURE!' : yourTime < 180 ? ' ⏰' : '';
+      
+      const comprehensivePrompt = `You are ${model.role}, Grandmaster (2800 ELO), playing ${colorName}.
 
-Recent moves: ${recentMoves || 'game start'}
+**GAME STATE:**
+Move: ${gameState.moves.length + 1}
+Phase: ${phase.toUpperCase()}
+History: ${pgnHistory || 'Game start'}
+Time - You: ${yourMins}:${yourSecs.toString().padStart(2,'0')}${timePressure} | Opp: ${oppMins}:${oppSecs.toString().padStart(2,'0')}
 
-Your LEGAL moves: ${moveList}${legalMoves.length > 20 ? '...' : ''}
+**STRATEGY:** ${phaseGuidance[phase as keyof typeof phaseGuidance]}
 
-Choose ONE move and respond ONLY in JSON format:
-{"from": "e2", "to": "e4", "reason": "brief reason"}
+**YOUR LEGAL MOVES (choose ONE):**
+${moveList}${legalMoves.length > 25 ? '...' : ''}
+
+**TASK:**
+1. Analyze position quickly (material, king safety, tactics)
+2. Consider 2-3 best moves from the list
+3. Choose the strongest move
+
+**RESPOND in JSON:**
+{"from": "e2", "to": "e4", "reason": "control center, develop"}
 
 Your move:`;
 
       console.log('📋 阶段:', phase, '角色:', model.role);
-      console.log('📤 提示词长度:', simplePrompt.length, '字符');
-      console.log('📤 提示词内容:\n', simplePrompt);
+      console.log('📤 提示词长度:', comprehensivePrompt.length, '字符');
+      console.log('📤 提示词内容:\n', comprehensivePrompt);
       
       const messages = [
-        { role: 'user', content: simplePrompt }
+        { role: 'user', content: comprehensivePrompt }
       ];
 
       console.log('📤 发送到Workers AI, 模型:', model.modelId);
