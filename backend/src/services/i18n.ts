@@ -42,7 +42,19 @@ export const translations: Record<Language, Record<string, string>> = {
     continue: '继续对局',
     language: '语言',
     welcomeText: '点击左上角"新游戏"按钮开始对弈',
-    welcomeFeatures: '🤖 5种AI棋手 | 💯 完全免费 | 🌍 11种语言'
+    welcomeFeatures: '🤖 5种AI棋手 | 💯 完全免费 | 🌍 11种语言',
+    
+    // AI思考界面
+    aiThinking: 'AI思考过程',
+    aiPhase: '阶段',
+    aiReasoning: '推理',
+    aiEvaluation: '评估',
+    aiConfidence: '信心',
+    
+    // Footer链接
+    privacy: '隐私政策',
+    terms: '服务条款',
+    about: '关于我们'
   },
   'zh-TW': {
     appName: 'AI國際象棋',
@@ -124,7 +136,19 @@ export const translations: Record<Language, Record<string, string>> = {
     continue: 'Continue Game',
     language: 'Language',
     welcomeText: 'Click "New Game" button to start playing',
-    welcomeFeatures: '🤖 5 AI Players | 💯 Free | 🌍 11 Languages'
+    welcomeFeatures: '🤖 5 AI Players | 💯 Free | 🌍 11 Languages',
+    
+    // AI思考界面
+    aiThinking: 'AI Thinking Process',
+    aiPhase: 'Phase',
+    aiReasoning: 'Reasoning',
+    aiEvaluation: 'Evaluation',
+    aiConfidence: 'Confidence',
+    
+    // Footer链接
+    privacy: 'Privacy Policy',
+    terms: 'Terms of Service',
+    about: 'About Us'
   },
   'fr': {
     appName: 'Échecs IA',
