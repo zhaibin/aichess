@@ -119,35 +119,49 @@ export async function getAIMove(
       console.log('📤 发送到Workers AI, 模型:', model.modelId);
       console.log('📤 消息数量:', messages.length);
       
-      // ✅ 尝试方案1: 使用messages格式（LLM模型）
+      // ✅ 尝试不同的API格式
       let response;
+      let successFormat = null;
+      
+      // 格式1: Text Generation格式
       try {
-        console.log('📤 尝试格式1: {messages}');
+        console.log('📤 尝试格式1: Text Generation {prompt}');
+        const promptText = `${getSystemPrompt()}\n\n${getUserPrompt(gameState)}`;
         response = await env.AI.run(model.modelId, {
-          messages: messages
+          prompt: promptText,
+          max_tokens: 100
         });
         console.log('✅ 格式1成功');
+        successFormat = 1;
       } catch (e1) {
-        console.log('❌ 格式1失败:', e1.message);
+        console.log('❌ 格式1失败:', String(e1).substring(0, 200));
         
-        // 尝试方案2: 使用prompt格式
+        // 格式2: Chat格式
         try {
-          console.log('📤 尝试格式2: {prompt}');
-          const promptText = messages.map(m => `${m.role}: ${m.content}`).join('\n\n');
+          console.log('📤 尝试格式2: Chat {messages}');
           response = await env.AI.run(model.modelId, {
-            prompt: promptText
+            messages: messages
           });
           console.log('✅ 格式2成功');
+          successFormat = 2;
         } catch (e2) {
-          console.log('❌ 格式2失败:', e2.message);
+          console.log('❌ 格式2失败:', String(e2).substring(0, 200));
           
-          // 尝试方案3: 直接传prompt字符串
-          console.log('📤 尝试格式3: prompt字符串');
-          const promptText = messages.map(m => `${m.role}: ${m.content}`).join('\n\n');
-          response = await env.AI.run(model.modelId, promptText);
-          console.log('✅ 格式3成功');
+          // 格式3: 直接调用（最简单）
+          try {
+            console.log('📤 尝试格式3: Direct prompt');
+            const promptText = `${getSystemPrompt()}\n\n${getUserPrompt(gameState)}`;
+            response = await env.AI.run(model.modelId, promptText);
+            console.log('✅ 格式3成功');
+            successFormat = 3;
+          } catch (e3) {
+            console.log('❌ 格式3失败:', String(e3).substring(0, 200));
+            throw new Error('所有API格式都失败: ' + String(e3));
+          }
         }
       }
+      
+      console.log('✅ 成功使用格式', successFormat);
       
       console.log('📥 Workers AI响应类型:', typeof response);
       console.log('📥 Workers AI响应keys:', Object.keys(response || {}));
