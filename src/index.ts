@@ -126,7 +126,7 @@ export default {
 
       // 健康检查端点
       if (path === '/health') {
-        return new Response(JSON.stringify({ status: 'ok', version: '2.1.2' }), {
+        return new Response(JSON.stringify({ status: 'ok', version: '2.1.5' }), {
           headers: { 'Content-Type': 'application/json' }
         });
       }
