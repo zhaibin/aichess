@@ -1481,33 +1481,41 @@ ${getSEOTags(lang)}
 
     // 更新界面语言
     function updateLanguage() {
+      // 安全更新元素，只更新存在的元素
+      const safeUpdate = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+      };
       
-      document.getElementById('app-name').textContent = t('appName');
-      document.getElementById('new-game-title').textContent = t('newGame');
-      document.getElementById('new-game-btn-text').textContent = t('newGame');
-      document.getElementById('game-mode-label').textContent = t('timeControl');
-      document.getElementById('time-control-label').textContent = t('timeControl');
-      document.getElementById('white-ai-label').textContent = t('whitePlayer') + ' ' + t('ai');
-      document.getElementById('black-ai-label').textContent = t('blackPlayer') + ' ' + t('ai');
-      document.getElementById('start-game').textContent = t('startGame');
-      document.getElementById('move-history-title').textContent = t('moveHistory');
+      safeUpdate('new-game-title', t('newGame'));
+      safeUpdate('new-game-btn-text', t('newGame'));
+      safeUpdate('game-mode-label', t('timeControl'));
+      safeUpdate('time-control-label', t('timeControl'));
+      safeUpdate('white-ai-label', t('whitePlayer') + ' ' + t('ai'));
+      safeUpdate('black-ai-label', t('blackPlayer') + ' ' + t('ai'));
+      safeUpdate('start-game', t('startGame'));
+      safeUpdate('move-history-title', t('moveHistory'));
       
       // 更新欢迎消息
-      document.getElementById('welcome-title').textContent = t('appName');
-      document.getElementById('welcome-text').textContent = t('welcomeText');
-      document.getElementById('welcome-features').textContent = t('welcomeFeatures');
+      safeUpdate('welcome-title', t('appName'));
+      safeUpdate('welcome-text', t('welcomeText'));
+      safeUpdate('welcome-features', t('welcomeFeatures'));
       
       // 更新游戏模式选项
       const gameModeSelect = document.getElementById('game-mode');
-      gameModeSelect.options[0].textContent = t('humanVsHuman');
-      gameModeSelect.options[1].textContent = t('humanVsAI');
-      gameModeSelect.options[2].textContent = t('aiVsAI');
+      if (gameModeSelect && gameModeSelect.options.length >= 3) {
+        gameModeSelect.options[0].textContent = t('humanVsHuman');
+        gameModeSelect.options[1].textContent = t('humanVsAI');
+        gameModeSelect.options[2].textContent = t('aiVsAI');
+      }
       
       // 更新时间控制选项
       const timeControlSelect = document.getElementById('time-control');
-      timeControlSelect.options[0].textContent = t('minutes5');
-      timeControlSelect.options[1].textContent = t('minutes10');
-      timeControlSelect.options[2].textContent = t('minutes15');
+      if (timeControlSelect && timeControlSelect.options.length >= 3) {
+        timeControlSelect.options[0].textContent = t('minutes5');
+        timeControlSelect.options[1].textContent = t('minutes10');
+        timeControlSelect.options[2].textContent = t('minutes15');
+      }
     }
 
     // 开始游戏
