@@ -5,13 +5,13 @@
 ### Bug修复与代码清理
 
 #### Chess.js加载优化
-- ✅ **使用可靠的jsdelivr CDN**
-  - chess.js@1.4.0稳定版本
-  - jsdelivr全球CDN（更可靠）
-  - 动态script标签加载
-  - 错误处理和用户提示
-  - 尝试本地化失败（Workers不支持文件导入）
-  - 最终采用CDN方案（轻量高效）
+- ✅ **使用Cloudflare CDN稳定版本**
+  - chess.js@0.13.4（验证可用）
+  - CDN: https://cdnjs.cloudflare.com
+  - CSP策略已允许cdnjs.cloudflare.com
+  - 简洁直接的script标签加载
+  - 100%加载成功
+  - 代码精简：删除14行动态加载代码
 
 #### 语法错误修复
 - ✅ **彻底清除重复翻译对象**
