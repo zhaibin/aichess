@@ -88,28 +88,24 @@ export async function getAIMove(
 ): Promise<{ from: string; to: string; promotion?: string } | null> {
   console.log('🎮 getAIMove被调用, 模型:', aiModel);
   
-  // ⚠️ Workers AI API格式问题未解决，暂时使用随机移动
-  console.log('⚠️ Workers AI调试中，使用随机合法移动作为AI');
-  console.log('💡 AI会选择随机但合法的移动');
-  return getRandomLegalMove(gameState);
-  
-  /* Workers AI调试中 - API格式问题
   // 检查env.AI是否存在
   if (!env || !env.AI) {
     console.error('❌ Workers AI未绑定！env.AI不存在');
-    console.error('环境变量:', Object.keys(env || {}));
-    throw new Error('Workers AI binding not found. Please check wrangler.toml configuration.');
+    console.log('⚠️ 降级为随机移动');
+    return getRandomLegalMove(gameState);
   }
   
   const model = AI_MODELS[aiModel];
   if (!model) {
     console.error('❌ 无效的AI模型:', aiModel);
     console.log('可用模型:', Object.keys(AI_MODELS));
-    throw new Error(`Invalid AI model: ${aiModel}. Available models: ${Object.keys(AI_MODELS).join(', ')}`);
+    console.log('⚠️ 降级为随机移动');
+    return getRandomLegalMove(gameState);
   }
 
   console.log('✅ AI绑定检查通过');
   console.log('📋 使用模型:', model.name, '(' + model.modelId + ')');
+  console.log('📋 API格式:', model.type);
 
   const maxRetries = 3;
   
@@ -123,62 +119,43 @@ export async function getAIMove(
       ];
 
       console.log('📤 发送到Workers AI, 模型:', model.modelId);
-      console.log('📤 消息数量:', messages.length);
+      console.log('📤 API类型:', model.type);
       
-      // ✅ 尝试不同的API格式
+      // ✅ 根据模型类型使用正确的API格式
       let response;
-      let successFormat = null;
       
-      // 格式1: Text Generation格式
-      try {
-        console.log('📤 尝试格式1: Text Generation {prompt}');
-        const promptText = `${getSystemPrompt()}\n\n${getUserPrompt(gameState)}`;
-        response = await env.AI.run(model.modelId, {
-          prompt: promptText,
-          max_tokens: 100
-        });
-        console.log('✅ 格式1成功');
-        successFormat = 1;
-      } catch (e1) {
-        console.log('❌ 格式1失败:', String(e1).substring(0, 200));
+      if (model.type === 'instructions') {
+        // GPT-OSS使用instructions+input格式
+        console.log('📤 使用instructions格式');
+        const systemPrompt = getSystemPrompt();
+        const userPrompt = getUserPrompt(gameState);
         
-        // 格式2: Chat格式
-        try {
-          console.log('📤 尝试格式2: Chat {messages}');
-          response = await env.AI.run(model.modelId, {
-            messages: messages
-          });
-          console.log('✅ 格式2成功');
-          successFormat = 2;
-        } catch (e2) {
-          console.log('❌ 格式2失败:', String(e2).substring(0, 200));
-          
-          // 格式3: 直接调用（最简单）
-          try {
-            console.log('📤 尝试格式3: Direct prompt');
-            const promptText = `${getSystemPrompt()}\n\n${getUserPrompt(gameState)}`;
-            response = await env.AI.run(model.modelId, promptText);
-            console.log('✅ 格式3成功');
-            successFormat = 3;
-          } catch (e3) {
-            console.log('❌ 格式3失败:', String(e3).substring(0, 200));
-            throw new Error('所有API格式都失败: ' + String(e3));
-          }
-        }
+        response = await env.AI.run(model.modelId, {
+          instructions: systemPrompt,
+          input: userPrompt
+        });
+      } else {
+        // 其他模型使用messages格式
+        console.log('📤 使用messages格式');
+        response = await env.AI.run(model.modelId, {
+          messages: messages
+        });
       }
-      
-      console.log('✅ 成功使用格式', successFormat);
       
       console.log('📥 Workers AI响应类型:', typeof response);
       console.log('📥 Workers AI响应keys:', Object.keys(response || {}));
       console.log('📥 完整响应:', JSON.stringify(response, null, 2).substring(0, 500));
 
-      // 提取响应
+      // 提取响应（多种可能的格式）
       let aiResponse = '';
       if (response.response) {
         aiResponse = response.response;
       } else if (response.result?.response) {
         aiResponse = response.result.response;
+      } else if (response.output) {
+        aiResponse = response.output;
+      } else if (response.text) {
+        aiResponse = response.text;
       } else if (typeof response === 'string') {
         aiResponse = response;
       }
@@ -240,16 +217,17 @@ export async function getAIMove(
       console.error('错误详情:', error instanceof Error ? error.message : String(error));
       console.error('错误堆栈:', error instanceof Error ? error.stack : '无堆栈');
       
-      // 最后一次尝试才抛出错误
+      // 最后一次尝试，降级为随机移动
       if (attempt === maxRetries - 1) {
-        throw new Error(`Workers AI调用失败 (${maxRetries}次尝试): ${error instanceof Error ? error.message : String(error)}`);
+        console.log('⚠️ AI所有尝试失败，使用随机移动');
+        return getRandomLegalMove(gameState);
       }
     }
   }
 
-  // 不应该到这里
-  throw new Error('AI调用逻辑错误');
-  */
+  // 不应该到这里，降级
+  console.log('⚠️ AI逻辑异常，使用随机移动');
+  return getRandomLegalMove(gameState);
 }
 
 /**

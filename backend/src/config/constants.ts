@@ -1,30 +1,35 @@
 // 常量配置
 
 export const AI_MODELS = {
-  'gpt-oss-20b': {
-    id: 'gpt-oss-20b',
-    name: 'ChatGPT 20B',
-    modelId: '@cf/openai/gpt-oss-20b'
+  'gpt-oss-120b': {
+    id: 'gpt-oss-120b',
+    name: 'ChatGPT 120B',
+    modelId: '@cf/openai/gpt-oss-120b',
+    type: 'instructions' // 使用instructions+input格式
   },
   'llama-4-scout-17b': {
     id: 'llama-4-scout-17b',
     name: 'Meta Llama4 17B',
-    modelId: '@cf/meta/llama-4-scout-17b-16e-instruct'
+    modelId: '@cf/meta/llama-4-scout-17b-16e-instruct',
+    type: 'messages' // 使用messages格式
   },
   'gemma-3-12b': {
     id: 'gemma-3-12b',
     name: 'Gemma 3 12B',
-    modelId: '@cf/google/gemma-3-12b-it'
+    modelId: '@cf/google/gemma-3-12b-it',
+    type: 'messages'
   },
   'qwq-32b': {
     id: 'qwq-32b',
     name: 'QwQ 32B',
-    modelId: '@cf/qwen/qwq-32b'
+    modelId: '@cf/qwen/qwq-32b',
+    type: 'messages'
   },
   'deepseek-32b': {
     id: 'deepseek-32b',
     name: 'Deepseek 32B',
-    modelId: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b'
+    modelId: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
+    type: 'messages'
   }
 } as const;
 
