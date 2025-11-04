@@ -117,12 +117,77 @@ class ChessEngine {
     if (!piece) return false;
 
     const target = this._board[to.rank][to.file];
-    if (target && target.color === piece.color) return false;
+    if (target) {
+      // 不能吃自己的棋子
+      if (target.color === piece.color) return false;
+      // ❌ 禁止吃掉国王（关键修复！）
+      if (target.type === 'k') return false;
+    }
 
-    return this.canPieceMove(piece, from, to);
+    // 基本移动规则
+    if (!this.canPieceMove(piece, from, to)) return false;
+
+    // ✅ 检查移动后是否让自己被将军
+    return this.wouldNotCauseCheck(from, to);
+  }
+
+  wouldNotCauseCheck(from, to) {
+    // 临时执行移动
+    const piece = this._board[from.rank][from.file];
+    const captured = this._board[to.rank][to.file];
+    
+    this._board[to.rank][to.file] = piece;
+    this._board[from.rank][from.file] = null;
+
+    // 查找自己的王
+    let kingPos = null;
+    for (let rank = 0; rank < 8; rank++) {
+      for (let file = 0; file < 8; file++) {
+        const p = this._board[rank][file];
+        if (p && p.type === 'k' && p.color === this.turn) {
+          kingPos = { file, rank };
+          break;
+        }
+      }
+      if (kingPos) break;
+    }
+
+    let safe = true;
+    if (!kingPos) {
+      safe = false;
+    } else {
+      // 检查王是否被攻击
+      const opponent = this.turn === 'w' ? 'b' : 'w';
+      safe = !this.isSquareAttacked(kingPos, opponent);
+    }
+
+    // 撤销移动
+    this._board[from.rank][from.file] = piece;
+    this._board[to.rank][to.file] = captured;
+
+    return safe;
+  }
+
+  isSquareAttacked(square, byColor) {
+    for (let rank = 0; rank < 8; rank++) {
+      for (let file = 0; file < 8; file++) {
+        const piece = this._board[rank][file];
+        if (!piece || piece.color !== byColor) continue;
+        const from = { file, rank };
+        // 只检查基本移动能力，不递归检查将军
+        if (this.canPieceMoveBasic(piece, from, square)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   canPieceMove(piece, from, to) {
+    return this.canPieceMoveBasic(piece, from, to);
+  }
+
+  canPieceMoveBasic(piece, from, to) {
     const dx = to.file - from.file;
     const dy = to.rank - from.rank;
 
