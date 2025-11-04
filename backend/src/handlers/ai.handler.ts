@@ -76,8 +76,21 @@ export async function handleAIMove(
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     console.log('🧠 调用AI生成移动, 模型:', currentPlayer.aiModel);
-    const aiMove = await getAIMove(game, currentPlayer.aiModel!, env);
-    console.log('🎯 AI返回:', aiMove);
+    
+    let aiMove = null;
+    try {
+      aiMove = await getAIMove(game, currentPlayer.aiModel!, env);
+      console.log('🎯 AI返回:', aiMove);
+    } catch (error) {
+      console.error('❌ AI调用异常:', error);
+      return new Response(JSON.stringify({ 
+        error: 'AI service error',
+        details: error instanceof Error ? error.message : String(error)
+      }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+      });
+    }
 
     if (!aiMove) {
       console.error('❌ AI未能生成移动');

@@ -916,6 +916,29 @@ export function getFullHTMLTemplate(lang: Language): string {
       if (!gameState) {
         console.log('练习模式');
         if (selectedSquare) {
+          // 检查是否需要升变
+          const piece = chess.get(selectedSquare);
+          const toSquare = chess.parseSquare(squareName);
+          let promotion = undefined;
+          
+          if (piece && piece.type === 'p' && (toSquare.rank === 7 || toSquare.rank === 0)) {
+            console.log('🎯 兵到达底线，需要升变');
+            showPromotionDialog(piece.color).then(selectedPromotion => {
+              if (selectedPromotion) {
+                const result = chess.move({ from: selectedSquare, to: squareName, promotion: selectedPromotion });
+                if (result) {
+                  console.log('练习升变成功');
+                  renderBoard();
+                  updateMoveHistory();
+                  highlightCurrentTurnPieces();
+                }
+              }
+              selectedSquare = null;
+              clearHighlights();
+            });
+            return;
+          }
+          
           const result = chess.move({ from: selectedSquare, to: squareName });
           if (result) {
             console.log('练习移动成功');
