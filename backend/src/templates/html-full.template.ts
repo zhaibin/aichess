@@ -709,9 +709,31 @@ export function getFullHTMLTemplate(lang: Language): string {
       }
       
       // 游戏进行中
-      console.log('游戏状态:', gameState.status, '当前回合:', gameState.currentTurn);
+      console.log('游戏状态:', gameState.status, '当前回合:', gameState.currentTurn, '游戏模式:', gameState.mode);
       
-      // 判断当前玩家是否可以移动
+      // 人人对战模式：本地处理，不调用API
+      if (gameState.mode === 'human-vs-human') {
+        if (selectedSquare) {
+          const result = chess.move({ from: selectedSquare, to: squareName });
+          if (result) {
+            console.log('本地移动成功:', result);
+            renderBoard();
+            // 更新本地gameState（可选）
+            gameState.currentTurn = chess.turn;
+          }
+          selectedSquare = null;
+          clearHighlights();
+        } else {
+          const piece = chess.get(squareName);
+          if (piece && piece.color === chess.turn) {
+            selectedSquare = squareName;
+            highlightSquare(square);
+          }
+        }
+        return;
+      }
+      
+      // 人机对战或AI对战：需要API
       const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
       console.log('当前玩家:', currentPlayer);
       
@@ -727,12 +749,15 @@ export function getFullHTMLTemplate(lang: Language): string {
         clearHighlights();
       } else {
         const piece = chess.get(squareName);
+        console.log('点击的棋子:', piece, '当前回合:', chess.turn, 'gameState回合:', gameState.currentTurn);
+        
         // 只能选择当前回合的棋子
-        if (piece && piece.color === chess.turn && piece.color === gameState.currentTurn) {
+        if (piece && piece.color === gameState.currentTurn) {
+          console.log('选中棋子:', squareName);
           selectedSquare = squareName;
           highlightSquare(square);
         } else if (piece) {
-          console.log('不是你的回合或不是你的棋子');
+          console.log('不是你的回合，当前回合是:', gameState.currentTurn === 'w' ? '白方' : '黑方');
         }
       }
     }
