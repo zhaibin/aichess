@@ -124,17 +124,6 @@ export default {
         });
       }
 
-      // chess.js库文件
-      if (path === '/chess.js') {
-        const chessLib = await getChessLib();
-        return new Response(chessLib, {
-          headers: {
-            'Content-Type': 'application/javascript; charset=utf-8',
-            'Cache-Control': 'public, max-age=86400', // 缓存24小时
-            ...corsHeaders
-          }
-        });
-      }
 
       // 健康检查端点
       if (path === '/health') {
@@ -516,25 +505,6 @@ function getManifest(): string {
   }, null, 2);
 }
 
-/**
- * 获取chess.js库文件
- */
-async function getChessLib(): Promise<string> {
-  // 直接导入npm安装的chess.js
-  try {
-    const { Chess } = await import('chess.js');
-    
-    // 创建浏览器包装器
-    return `(function() {
-  const ChessClass = ${Chess.toString()};
-  window.Chess = ChessClass;
-})();`;
-  } catch (error) {
-    console.error('Failed to import chess.js:', error);
-    // 返回最小实现
-    return `window.Chess = function() { console.error('Chess.js not available'); };`;
-  }
-}
 
 /**
  * 获取HTML界面（支持多语言SEO）
@@ -1663,8 +1633,22 @@ ${getSEOTags(lang)}
     }
   </script>
   
-  <!-- Chess.js库（本地化，从Workers提供） -->
-  <script src="/chess.js"></script>
+  <!-- Chess.js库（使用可靠的jsdelivr CDN） -->
+  <script>
+    // 加载chess.js库
+    (function() {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/chess.js@1.4.0/dist/chess.min.js';
+      script.onload = function() {
+        console.log('Chess.js loaded from jsdelivr');
+      };
+      script.onerror = function() {
+        console.error('Failed to load Chess.js');
+        alert('Unable to load chess engine. Please refresh the page.');
+      };
+      document.head.appendChild(script);
+    })();
+  </script>
 </body>
 </html>`;
 }
