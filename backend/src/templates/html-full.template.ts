@@ -1345,12 +1345,21 @@ export function getFullHTMLTemplate(lang: Language): string {
           renderBoard();
           updateGameInfo();
           
+          // ✅ 重置倒计时（AI移动后）
+          resetTimer();
+          
           // 如果游戏还在进行，触发下一步
           if (gameState.status === 'active') {
             const nextPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
             if (nextPlayer.type === 'ai') {
               console.log('🔁 2秒后触发下一步AI移动');
               setTimeout(() => triggerAIvsAIMove(), 2000);
+            }
+          } else {
+            console.log('🏁 游戏结束，状态:', gameState.status);
+            if (timerInterval) {
+              clearInterval(timerInterval);
+              console.log('⏱️ 倒计时已停止');
             }
           }
         } else {
@@ -1493,6 +1502,10 @@ export function getFullHTMLTemplate(lang: Language): string {
         title.textContent = '🤝 和棋！';
         title.style.color = '#ff9800';
         text.textContent = '双方平局';
+      } else if (reason === '超时') {
+        title.textContent = '⏰ 超时！';
+        title.style.color = '#f44336';
+        text.textContent = winner + ' (' + winnerName + ') 获胜！对手超时';
       } else {
         title.textContent = '🎉 ' + winner + ' 获胜！';
         text.textContent = winnerName + ' 将死对方！';
@@ -1548,13 +1561,20 @@ export function getFullHTMLTemplate(lang: Language): string {
     
     // 启动游戏倒计时
     function startGameTimer() {
-      if (timerInterval) clearInterval(timerInterval);
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        console.log('⏱️ 清除旧的倒计时');
+      }
       
       lastMoveTime = Date.now();
       
       timerInterval = setInterval(() => {
         if (!gameState || gameState.status !== 'active') {
-          if (timerInterval) clearInterval(timerInterval);
+          if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            console.log('⏱️ 游戏非active状态，停止倒计时');
+          }
           return;
         }
         
@@ -1563,32 +1583,53 @@ export function getFullHTMLTemplate(lang: Language): string {
         
         // 扣除当前回合玩家的时间
         const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
-        const newTime = currentPlayer.timeRemaining - elapsed;
+        const opponent = gameState.currentTurn === 'w' ? gameState.blackPlayer : gameState.whitePlayer;
         
-        if (newTime <= 0) {
+        // 计算新时间（不修改gameState，只显示）
+        const newTime = Math.max(0, currentPlayer.timeRemaining - elapsed);
+        
+        if (newTime <= 0 && currentPlayer.timeRemaining > 0) {
           // 时间用完，判负
+          console.log('⏰ 超时！', currentPlayer.name, '时间用完');
           currentPlayer.timeRemaining = 0;
           gameState.status = 'timeout';
           gameState.winner = gameState.currentTurn === 'w' ? 'b' : 'w';
           
-          if (timerInterval) clearInterval(timerInterval);
+          if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+          }
           
-          alert((gameState.currentTurn === 'w' ? t('whitePlayer') : t('blackPlayer')) + ' ' + t('timeout') + '! ' + 
-                (gameState.winner === 'w' ? t('whitePlayer') : t('blackPlayer')) + ' ' + t('whiteWins'));
+          // 显示超时胜利
+          showVictory(
+            gameState.winner === 'w' ? '白方' : '黑方',
+            opponent.name,
+            '超时'
+          );
           return;
         }
         
-        // 更新显示
+        // 更新显示（实时倒计时）
         updateTimer(gameState.currentTurn === 'w' ? 'white-timer' : 'black-timer', newTime);
-      }, 100); // 每0.1秒更新一次，更精确
+        updateTimer(gameState.currentTurn === 'w' ? 'black-timer' : 'white-timer', opponent.timeRemaining);
+      }, 100); // 每0.1秒更新一次
       
       console.log('⏱️ 倒计时已启动');
     }
     
     // 重置倒计时（移动后调用）
     function resetTimer() {
-      lastMoveTime = Date.now();
-      console.log('⏱️ 倒计时重置');
+      const now = Date.now();
+      const elapsed = Math.floor((now - lastMoveTime) / 1000);
+      
+      // 在重置前，先保存当前玩家消耗的时间
+      if (gameState && gameState.status === 'active') {
+        const prevPlayer = gameState.currentTurn === 'w' ? gameState.blackPlayer : gameState.whitePlayer;
+        prevPlayer.timeRemaining = Math.max(0, prevPlayer.timeRemaining - elapsed);
+        console.log('⏱️ 倒计时重置,', (prevPlayer.color === 'w' ? '白方' : '黑方'), '消耗', elapsed, '秒，剩余', prevPlayer.timeRemaining, '秒');
+      }
+      
+      lastMoveTime = now;
     }
     
     function updateTimer(id, seconds) {
