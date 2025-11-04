@@ -2,6 +2,12 @@ name = "aichess"
 main = "src/worker.ts"
 compatibility_date = "2024-11-01"
 
+# 域名绑定
+routes = [
+  { pattern = "aichess.win/*", zone_name = "aichess.win" },
+  { pattern = "www.aichess.win/*", zone_name = "aichess.win" }
+]
+
 [ai]
 binding = "AI"
 
