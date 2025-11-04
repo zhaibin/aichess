@@ -39,11 +39,14 @@
 ### Bug修复
 
 #### JavaScript加载问题
-- ✅ 修复Chess.js库加载顺序问题
+- ✅ 修复Chess.js库CDN 404错误
+  - 更换为unpkg稳定版本0.10.3
+  - 添加onerror错误处理
   - 添加onload回调确保库已加载
   - 添加typeof检查防止未定义错误
-  - 添加超时重试机制（100ms）
-  - Chess未定义错误已解决
+  - 添加超时重试机制（500ms）
+  - Chess未定义错误已彻底解决
+  - 代码体积优化：187KB → 102KB (45%减少)
 
 #### PWA配置
 - ✅ 更新PWA meta标签
