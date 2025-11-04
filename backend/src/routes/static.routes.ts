@@ -2,6 +2,7 @@
 import { Env } from '../types';
 import { getFullHTMLTemplate } from '../templates/html-full.template';
 import { getChessEngineScript } from '../templates/chess-engine.template';
+import { getPrivacyPolicy, getTermsOfService, getAboutUs } from '../templates/legal-pages';
 import { getLanguageFromURL } from '../utils/language';
 import { getResponseHeaders } from '../config/headers';
 import { CACHE_CONTROL } from '../config/constants';
@@ -34,6 +35,36 @@ export async function staticRoutes(request: Request, env: Env): Promise<Response
         'application/javascript; charset=utf-8',
         CACHE_CONTROL.STATIC
       )
+    });
+  }
+
+  // 法律文档页面
+  const lang = getLanguageFromURL(url);
+  
+  if (path === '/privacy') {
+    return new Response(getPrivacyPolicy(lang), {
+      headers: {
+        ...getResponseHeaders('text/html; charset=utf-8', CACHE_CONTROL.HTML),
+        'Content-Language': lang
+      }
+    });
+  }
+  
+  if (path === '/terms') {
+    return new Response(getTermsOfService(lang), {
+      headers: {
+        ...getResponseHeaders('text/html; charset=utf-8', CACHE_CONTROL.HTML),
+        'Content-Language': lang
+      }
+    });
+  }
+  
+  if (path === '/about') {
+    return new Response(getAboutUs(lang), {
+      headers: {
+        ...getResponseHeaders('text/html; charset=utf-8', CACHE_CONTROL.HTML),
+        'Content-Language': lang
+      }
     });
   }
 
