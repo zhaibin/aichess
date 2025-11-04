@@ -1373,6 +1373,103 @@ export function getFullHTMLTemplate(lang: Language): string {
       }
       
       updateMoveHistory();
+      
+      // ✅ 检查游戏结束状态
+      checkGameOver();
+    }
+    
+    /**
+     * 检查游戏是否结束（将死/和棋）
+     */
+    function checkGameOver() {
+      if (!chess || !gameState) return;
+      
+      // 检查将死
+      if (chess.isCheckmate()) {
+        console.log('🎉 将死！游戏结束');
+        const winner = gameState.currentTurn === 'w' ? '黑方' : '白方';
+        const winnerPlayer = gameState.currentTurn === 'w' ? gameState.blackPlayer : gameState.whitePlayer;
+        
+        gameState.status = 'completed';
+        gameState.winner = gameState.currentTurn === 'w' ? 'b' : 'w';
+        
+        // 停止倒计时
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          console.log('⏱️ 倒计时已停止');
+        }
+        
+        // 显示胜利庆祝
+        showVictory(winner, winnerPlayer.name, '将死');
+        return;
+      }
+      
+      // 检查和棋
+      if (chess.isDraw()) {
+        console.log('🤝 和棋！游戏结束');
+        gameState.status = 'draw';
+        gameState.winner = 'draw';
+        
+        // 停止倒计时
+        if (timerInterval) {
+          clearInterval(timerInterval);
+        }
+        
+        showVictory('和棋', '双方平局', '和棋');
+        return;
+      }
+      
+      // 检查将军（提示）
+      if (chess.isCheck()) {
+        console.log('⚠️ 将军！');
+        flashPlayerInfo(gameState.currentTurn);
+      }
+    }
+    
+    /**
+     * 显示胜利庆祝
+     */
+    function showVictory(winner, winnerName, reason) {
+      const overlay = document.getElementById('victory-overlay');
+      const title = document.getElementById('victory-title');
+      const text = document.getElementById('victory-text');
+      
+      if (reason === '和棋') {
+        title.textContent = '🤝 和棋！';
+        title.style.color = '#ff9800';
+        text.textContent = '双方平局';
+      } else {
+        title.textContent = '🎉 ' + winner + ' 获胜！';
+        text.textContent = winnerName + ' 将死对方！';
+      }
+      
+      overlay.classList.add('show');
+      
+      // 撒花效果
+      createConfetti();
+    }
+    
+    /**
+     * 创建撒花动画
+     */
+    function createConfetti() {
+      const overlay = document.getElementById('victory-overlay');
+      const colors = ['#f44336', '#e91e63', '#9c27b0', '#3f51b5', '#2196f3', '#4caf50', '#ffeb3b', '#ff9800'];
+      
+      for (let i = 0; i < 100; i++) {
+        setTimeout(() => {
+          const confetti = document.createElement('div');
+          confetti.className = 'confetti';
+          confetti.style.left = Math.random() * 100 + '%';
+          confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.animationDelay = Math.random() * 3 + 's';
+          confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+          overlay.appendChild(confetti);
+          
+          // 3秒后移除
+          setTimeout(() => confetti.remove(), 5000);
+        }, i * 30);
+      }
     }
     
     // 闪烁提示当前回合（替代弹窗）
