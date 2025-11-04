@@ -202,6 +202,14 @@ export async function getAIMove(
       // ✅ 极简提示词 - 直接要求JSON格式
       const phase = getGamePhase(gameState.moves.length);
       
+      // ✅ 获取所有合法移动
+      const chess = new ChessEngine(gameState.fen);
+      const legalMoves = chess.moves();
+      console.log('📋 合法移动数:', legalMoves.length);
+      
+      // 转换为简洁列表（前20个）
+      const moveList = legalMoves.slice(0, 20).map(m => `${m.from}→${m.to}`).join(', ');
+      
       // 获取最近3步
       let recentMoves = '';
       if (gameState.moves.length > 0) {
@@ -211,13 +219,14 @@ export async function getAIMove(
         }
       }
       
-      const simplePrompt = `You are playing chess as ${colorName}.
+      const simplePrompt = `You are ${model.role}, playing as ${colorName}.
 
-Current position: ${gameState.fen}
 Recent moves: ${recentMoves || 'game start'}
 
-Respond ONLY with JSON:
-{"from": "e2", "to": "e4", "reason": "control center"}
+Your LEGAL moves: ${moveList}${legalMoves.length > 20 ? '...' : ''}
+
+Choose ONE move and respond ONLY in JSON format:
+{"from": "e2", "to": "e4", "reason": "brief reason"}
 
 Your move:`;
 
