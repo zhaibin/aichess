@@ -1,6 +1,7 @@
 // Cloudflare Workers主入口
-import { Env, CreateGameRequest, MakeMoveRequest, AIGameQueueMessage, AI_MODELS } from './types';
+import { Env, CreateGameRequest, MakeMoveRequest, AIGameQueueMessage, AI_MODELS, Language } from './types';
 import { getAIMove } from './ai-player';
+import { getSEOTags, getLanguageFromURL, getLanguageFromHeader } from './seo-i18n';
 
 export { GameState } from './game-state';
 export { WebSocketRoom } from './websocket-room';
@@ -48,14 +49,20 @@ export default {
     const rateLimitResult = await checkRateLimit(env, rateLimitKey, 100, 60);
 
     try {
-      // 静态文件 - 返回HTML界面（带缓存）
+      // 静态文件 - 返回HTML界面（带缓存和多语言SEO）
       if (path === '/' || path === '/index.html') {
-        const html = getHTML();
+        // 检测语言：URL参数 > Accept-Language头 > 默认中文
+        const langFromURL = getLanguageFromURL(request.url);
+        const langFromHeader = getLanguageFromHeader(request.headers.get('Accept-Language'));
+        const detectedLang = url.searchParams.has('lang') ? langFromURL : langFromHeader;
+        
+        const html = getHTML(detectedLang);
         return new Response(html, {
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
             'Cache-Control': 'public, max-age=300, s-maxage=600', // 5分钟浏览器缓存，10分钟CDN缓存
-            'Content-Encoding': 'gzip',
+            'Content-Language': detectedLang,
+            'Vary': 'Accept-Language', // 根据语言缓存不同版本
             ...corsHeaders,
             ...securityHeaders
           }
@@ -438,21 +445,46 @@ Sitemap: https://aichess.win/sitemap.xml`;
 }
 
 /**
- * 获取sitemap.xml
+ * 获取sitemap.xml（支持多语言）
  */
 function getSitemap(): string {
   const baseUrl = 'https://aichess.win';
   const now = new Date().toISOString().split('T')[0];
+  const languages: Language[] = ['zh-CN', 'zh-TW', 'en', 'fr', 'es', 'de', 'it', 'pt', 'ru', 'ja', 'ko'];
   
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>${baseUrl}/</loc>
     <lastmod>${now}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
+    <priority>1.0</priority>`;
+  
+  // 添加hreflang链接
+  for (const lang of languages) {
+    sitemap += `
+    <xhtml:link rel="alternate" hreflang="${lang}" href="${baseUrl}/?lang=${lang}" />`;
+  }
+  
+  sitemap += `
   </url>
-</urlset>`;
+`;
+  
+  // 为每种语言添加单独的URL
+  for (const lang of languages) {
+    sitemap += `  <url>
+    <loc>${baseUrl}/?lang=${lang}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+`;
+  }
+  
+  sitemap += `</urlset>`;
+  
+  return sitemap;
 }
 
 /**
@@ -483,36 +515,18 @@ function getManifest(): string {
 }
 
 /**
- * 获取HTML界面
+ * 获取HTML界面（支持多语言SEO）
  */
-function getHTML(): string {
+function getHTML(lang: Language = 'zh-CN'): string {
+  const langCode = lang.split('-')[0]; // zh-CN -> zh
+  
   return `<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   
-  <!-- SEO优化 -->
-  <title>AIChess - AI国际象棋在线对战平台 | 人机对战 AI对战</title>
-  <meta name="description" content="AIChess是基于Cloudflare Workers的在线国际象棋对战平台，支持人人对战、人机对战和AI对AI对战。提供ELO评分、游戏回放、实时对战等功能。">
-  <meta name="keywords" content="国际象棋,AI象棋,在线象棋,chess,AI chess,人机对战,象棋游戏,chess game,ELO评分">
-  <meta name="author" content="AIChess">
-  <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://aichess.win/">
-  
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://aichess.win/">
-  <meta property="og:title" content="AIChess - AI国际象棋在线对战平台">
-  <meta property="og:description" content="支持人人对战、人机对战和AI对AI对战的在线国际象棋平台">
-  <meta property="og:image" content="https://aichess.win/og-image.png">
-  
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://aichess.win/">
-  <meta property="twitter:title" content="AIChess - AI国际象棋在线对战平台">
-  <meta property="twitter:description" content="支持人人对战、人机对战和AI对AI对战的在线国际象棋平台">
-  <meta property="twitter:image" content="https://aichess.win/twitter-image.png">
+${getSEOTags(lang)}
   
   <!-- PWA -->
   <meta name="theme-color" content="#667eea">
@@ -967,7 +981,7 @@ function getHTML(): string {
     let chess = null;
     let updateInterval = null;
     let aiModels = [];
-    let currentLanguage = 'zh-CN';
+    let currentLanguage = '${lang}'; // 使用服务器检测的语言
 
     // Unicode棋子符号
     const pieceSymbols = {
@@ -1411,10 +1425,15 @@ function getHTML(): string {
     // 初始化
     async function init() {
       await loadAIModels();
+      
+      // 设置语言选择器的当前值
+      document.getElementById('language-select').value = currentLanguage;
       updateLanguage();
+      
       document.getElementById('language-select').addEventListener('change', (e) => {
-        currentLanguage = e.target.value;
-        updateLanguage();
+        const newLang = e.target.value;
+        // 更新URL参数并刷新页面以获得正确的SEO
+        window.location.href = '/?lang=' + newLang;
       });
       
       document.getElementById('game-mode').addEventListener('change', updateAISelectors);

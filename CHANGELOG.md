@@ -1,5 +1,50 @@
 # 更新日志
 
+## [2.1.1] - 2025-11-04
+
+### SEO多语言增强
+
+#### 新增功能
+- ✅ **完整的多语言SEO支持**（11种语言）
+  - 每种语言独立的title、description、keywords
+  - 本地化的Open Graph标签
+  - 本地化的Twitter Card标签
+- ✅ **hreflang标签**
+  - 为所有11种语言添加hreflang链接
+  - x-default回退支持
+  - 正确的语言代码（zh-CN, zh-TW等）
+- ✅ **智能语言检测**
+  - URL参数优先（?lang=en）
+  - Accept-Language头自动检测
+  - 支持语言变体映射（en-US -> en）
+- ✅ **多语言sitemap**
+  - 为每种语言生成独立URL
+  - 添加xhtml:link alternate标签
+  - SEO友好的URL结构
+- ✅ **域名统一**
+  - 所有链接使用aichess.win
+  - Canonical链接正确设置
+  - OG和Twitter链接一致
+
+#### 技术改进
+- 新增 `seo-i18n.ts` 模块
+- Content-Language响应头
+- Vary: Accept-Language缓存优化
+- 语言切换自动刷新页面
+
+#### SEO覆盖语言
+- 简体中文 (zh-CN)
+- 繁体中文 (zh-TW)
+- English (en)
+- Français (fr)
+- Español (es)
+- Deutsch (de)
+- Italiano (it)
+- Português (pt)
+- Русский (ru)
+- 日本語 (ja)
+- 한국어 (ko)
+
 ## [2.1.0] - 2025-11-04
 
 ### 优化改进
