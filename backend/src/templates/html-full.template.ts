@@ -760,21 +760,21 @@ export function getFullHTMLTemplate(lang: Language): string {
         
         <!-- AI思考展示 -->
         <div class="ai-thinking" id="ai-thinking">
-          <h4>🧠 AI思考过程</h4>
+          <h4 id="ai-thinking-title">🧠 ${t('aiThinking')}</h4>
           <div class="thinking-item">
-            <span class="thinking-label">阶段:</span>
+            <span class="thinking-label" id="ai-phase-label">${t('aiPhase')}:</span>
             <span id="ai-phase">-</span>
           </div>
           <div class="thinking-item">
-            <span class="thinking-label">推理:</span>
+            <span class="thinking-label" id="ai-reasoning-label">${t('aiReasoning')}:</span>
             <span id="ai-reasoning">-</span>
           </div>
           <div class="thinking-item">
-            <span class="thinking-label">评估:</span>
+            <span class="thinking-label" id="ai-evaluation-label">${t('aiEvaluation')}:</span>
             <span id="ai-evaluation">-</span>
           </div>
           <div class="thinking-item">
-            <span class="thinking-label">信心:</span>
+            <span class="thinking-label" id="ai-confidence-label">${t('aiConfidence')}:</span>
             <span id="ai-confidence">-</span>
           </div>
         </div>
@@ -868,6 +868,13 @@ export function getFullHTMLTemplate(lang: Language): string {
       safeUpdate('move-history-title', t('moveHistory'));
       safeUpdate('white-player-name', t('whitePlayer'));
       safeUpdate('black-player-name', t('blackPlayer'));
+      
+      // AI思考界面
+      safeUpdate('ai-thinking-title', '🧠 ' + t('aiThinking'));
+      safeUpdate('ai-phase-label', t('aiPhase') + ':');
+      safeUpdate('ai-reasoning-label', t('aiReasoning') + ':');
+      safeUpdate('ai-evaluation-label', t('aiEvaluation') + ':');
+      safeUpdate('ai-confidence-label', t('aiConfidence') + ':');
       
       const gameModeSelect = document.getElementById('game-mode');
       if (gameModeSelect && gameModeSelect.options.length >= 3) {
