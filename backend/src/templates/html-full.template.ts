@@ -1293,7 +1293,7 @@ export function getFullHTMLTemplate(lang: Language): string {
       const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
       
       try {
-        console.log('请求AI移动...', retryCount > 0 ? `[重试 ${retryCount}]` : '');
+        console.log('请求AI移动...', retryCount > 0 ? '[重试 ' + retryCount + ']' : '');
         const response = await fetch('/api/ai-move', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1358,7 +1358,7 @@ export function getFullHTMLTemplate(lang: Language): string {
         return;
       }
       
-      console.log('🤖 触发AI移动:', currentPlayer.name, '(' + gameState.currentTurn + ')', retryCount > 0 ? `[重试 ${retryCount}]` : '');
+      console.log('🤖 触发AI移动:', currentPlayer.name, '(' + gameState.currentTurn + ')', retryCount > 0 ? '[重试 ' + retryCount + ']' : '');
       
       const moveStartTime = Date.now(); // 记录开始时间
       
