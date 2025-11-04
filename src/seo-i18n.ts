@@ -12,81 +12,81 @@ export interface SEOTranslation {
 
 export const seoTranslations: Record<Language, SEOTranslation> = {
   'zh-CN': {
-    title: 'AIChess - AI国际象棋在线对战平台 | 人机对战 AI对战',
-    description: 'AIChess是基于Cloudflare Workers的在线国际象棋对战平台，支持人人对战、人机对战和AI对AI对战。提供ELO评分、游戏回放、实时对战等功能。完全免费，支持11种语言。',
-    keywords: '国际象棋,AI象棋,在线象棋,chess,AI chess,人机对战,象棋游戏,chess game,ELO评分,国际象棋在线,免费象棋',
-    ogTitle: 'AIChess - AI国际象棋在线对战平台',
-    ogDescription: '支持人人对战、人机对战和AI对AI对战的在线国际象棋平台。5个AI模型，ELO评分系统，游戏回放，实时对战。'
+    title: 'AIChess - 智能国际象棋对战平台 | 5种AI棋手 免费在线下棋',
+    description: 'AIChess提供5种强大AI棋手在线对弈，从入门到大师级难度任你挑战。支持人人对战、人机对战、观看AI对决。完全免费，ELO评分系统，游戏回放分析，实时在线对战。支持11种语言，全球玩家都能畅玩。',
+    keywords: '国际象棋,AI象棋,在线象棋,免费象棋,人机对战,AI对战,象棋游戏,智能象棋,ELO评分,象棋AI,国际象棋在线,象棋分析',
+    ogTitle: 'AIChess - 5种AI棋手的智能象棋平台',
+    ogDescription: '挑战5种不同风格的AI棋手，从新手到大师级。完全免费，实时对战，游戏分析，全球排行榜。'
   },
   'zh-TW': {
-    title: 'AIChess - AI國際象棋線上對戰平台 | 人機對戰 AI對戰',
-    description: 'AIChess是基於Cloudflare Workers的線上國際象棋對戰平台，支援人人對戰、人機對戰和AI對AI對戰。提供ELO評分、遊戲回放、即時對戰等功能。完全免費，支援11種語言。',
-    keywords: '國際象棋,AI象棋,線上象棋,chess,AI chess,人機對戰,象棋遊戲,chess game,ELO評分,國際象棋線上,免費象棋',
-    ogTitle: 'AIChess - AI國際象棋線上對戰平台',
-    ogDescription: '支援人人對戰、人機對戰和AI對AI對戰的線上國際象棋平台。5個AI模型，ELO評分系統，遊戲回放，即時對戰。'
+    title: 'AIChess - 智能國際象棋對戰平台 | 5種AI棋手 免費線上下棋',
+    description: 'AIChess提供5種強大AI棋手線上對弈，從入門到大師級難度任你挑戰。支援人人對戰、人機對戰、觀看AI對決。完全免費，ELO評分系統，遊戲回放分析，即時線上對戰。支援11種語言，全球玩家都能暢玩。',
+    keywords: '國際象棋,AI象棋,線上象棋,免費象棋,人機對戰,AI對戰,象棋遊戲,智能象棋,ELO評分,象棋AI,國際象棋線上,象棋分析',
+    ogTitle: 'AIChess - 5種AI棋手的智能象棋平台',
+    ogDescription: '挑戰5種不同風格的AI棋手，從新手到大師級。完全免費，即時對戰，遊戲分析，全球排行榜。'
   },
   'en': {
-    title: 'AIChess - Online AI Chess Platform | Human vs AI | AI vs AI',
-    description: 'AIChess is an online chess platform powered by Cloudflare Workers. Play human vs human, human vs AI, or watch AI vs AI battles. Features ELO rating, game replay, real-time multiplayer, and 5 AI models. Free and supports 11 languages.',
-    keywords: 'chess,online chess,AI chess,chess game,play chess online,chess AI,ELO rating,chess platform,free chess,international chess',
-    ogTitle: 'AIChess - Online AI Chess Platform',
-    ogDescription: 'Play chess online with human vs human, human vs AI, or AI vs AI modes. 5 AI models, ELO rating, game replay, and real-time battles.'
+    title: 'AIChess - Play Chess Against 5 Powerful AI | Free Online Chess',
+    description: 'Challenge 5 unique AI chess opponents from beginner to grandmaster level. Play for free online with human vs human, human vs AI, or watch epic AI battles. Features ELO rating system, game analysis, replay mode, and real-time multiplayer. Available in 11 languages worldwide.',
+    keywords: 'chess,online chess,AI chess,free chess,chess AI,play chess online,chess game,smart chess,ELO rating,chess analysis,chess opponents,international chess',
+    ogTitle: 'AIChess - Challenge 5 Intelligent Chess AI',
+    ogDescription: 'Face 5 different AI chess opponents from novice to master. Completely free, real-time play, game analysis, global leaderboard.'
   },
   'fr': {
-    title: 'AIChess - Plateforme d\'Échecs IA en Ligne | Humain vs IA',
-    description: 'AIChess est une plateforme d\'échecs en ligne alimentée par Cloudflare Workers. Jouez humain contre humain, humain contre IA, ou regardez des batailles IA contre IA. Classement ELO, replay de parties, multijoueur en temps réel et 5 modèles IA. Gratuit et supporte 11 langues.',
-    keywords: 'échecs,échecs en ligne,échecs IA,jeu d\'échecs,jouer aux échecs en ligne,IA échecs,classement ELO,plateforme échecs,échecs gratuits',
-    ogTitle: 'AIChess - Plateforme d\'Échecs IA en Ligne',
-    ogDescription: 'Jouez aux échecs en ligne : humain vs humain, humain vs IA, ou IA vs IA. 5 modèles IA, classement ELO, replay de parties.'
+    title: 'AIChess - Jouez Contre 5 IA d\'Échecs Puissantes | Échecs Gratuits',
+    description: 'Affrontez 5 adversaires IA d\'échecs uniques, du niveau débutant au grand maître. Jouez gratuitement en ligne : humain vs humain, humain vs IA, ou regardez des batailles épiques d\'IA. Système de classement ELO, analyse de parties, mode replay et multijoueur en temps réel. Disponible en 11 langues.',
+    keywords: 'échecs,échecs en ligne,IA échecs,échecs gratuits,jouer aux échecs,jeu d\'échecs,échecs intelligents,classement ELO,analyse échecs,adversaires échecs',
+    ogTitle: 'AIChess - Défiez 5 IA d\'Échecs Intelligentes',
+    ogDescription: 'Affrontez 5 adversaires IA différents, du novice au maître. Gratuit, jeu en temps réel, analyse de parties, classement mondial.'
   },
   'es': {
-    title: 'AIChess - Plataforma de Ajedrez IA en Línea | Humano vs IA',
-    description: 'AIChess es una plataforma de ajedrez en línea impulsada por Cloudflare Workers. Juega humano contra humano, humano contra IA, o mira batallas IA contra IA. Clasificación ELO, repetición de juegos, multijugador en tiempo real y 5 modelos de IA. Gratis y soporta 11 idiomas.',
-    keywords: 'ajedrez,ajedrez en línea,ajedrez IA,juego de ajedrez,jugar ajedrez en línea,IA ajedrez,clasificación ELO,plataforma ajedrez,ajedrez gratis',
-    ogTitle: 'AIChess - Plataforma de Ajedrez IA en Línea',
-    ogDescription: 'Juega ajedrez en línea: humano vs humano, humano vs IA, o IA vs IA. 5 modelos IA, clasificación ELO, repetición de partidas.'
+    title: 'AIChess - Juega Contra 5 IA de Ajedrez Potentes | Ajedrez Gratis',
+    description: 'Desafía 5 oponentes IA de ajedrez únicos, desde principiante hasta gran maestro. Juega gratis en línea: humano vs humano, humano vs IA, o mira batallas épicas de IA. Sistema de clasificación ELO, análisis de partidas, modo repetición y multijugador en tiempo real. Disponible en 11 idiomas.',
+    keywords: 'ajedrez,ajedrez en línea,IA ajedrez,ajedrez gratis,jugar ajedrez,juego de ajedrez,ajedrez inteligente,clasificación ELO,análisis ajedrez,oponentes ajedrez',
+    ogTitle: 'AIChess - Desafía 5 IA de Ajedrez Inteligentes',
+    ogDescription: 'Enfrenta 5 oponentes IA diferentes, de novato a maestro. Completamente gratis, juego en tiempo real, análisis de partidas, ranking global.'
   },
   'de': {
-    title: 'AIChess - Online KI-Schach-Plattform | Mensch vs KI',
-    description: 'AIChess ist eine Online-Schachplattform basierend auf Cloudflare Workers. Spielen Sie Mensch gegen Mensch, Mensch gegen KI oder schauen Sie KI gegen KI Kämpfe. ELO-Wertung, Spielwiederholung, Echtzeit-Multiplayer und 5 KI-Modelle. Kostenlos und unterstützt 11 Sprachen.',
-    keywords: 'Schach,Online-Schach,KI-Schach,Schachspiel,Schach online spielen,KI Schach,ELO-Wertung,Schachplattform,kostenloses Schach',
-    ogTitle: 'AIChess - Online KI-Schach-Plattform',
-    ogDescription: 'Spielen Sie Schach online: Mensch vs Mensch, Mensch vs KI, oder KI vs KI. 5 KI-Modelle, ELO-Wertung, Spielwiederholung.'
+    title: 'AIChess - Spielen Sie Gegen 5 Starke Schach-KI | Kostenloses Schach',
+    description: 'Fordern Sie 5 einzigartige Schach-KI-Gegner heraus, vom Anfänger bis zum Großmeister. Spielen Sie kostenlos online: Mensch gegen Mensch, Mensch gegen KI, oder beobachten Sie epische KI-Kämpfe. ELO-Wertungssystem, Spielanalyse, Replay-Modus und Echtzeit-Multiplayer. Verfügbar in 11 Sprachen.',
+    keywords: 'Schach,Online-Schach,KI-Schach,kostenloses Schach,Schach spielen,Schachspiel,intelligentes Schach,ELO-Wertung,Schachanalyse,Schachgegner',
+    ogTitle: 'AIChess - Fordern Sie 5 Intelligente Schach-KI Heraus',
+    ogDescription: 'Spielen Sie gegen 5 verschiedene KI-Gegner, vom Novizen zum Meister. Völlig kostenlos, Echtzeit-Spiel, Spielanalyse, globale Rangliste.'
   },
   'it': {
-    title: 'AIChess - Piattaforma Scacchi IA Online | Umano vs IA',
-    description: 'AIChess è una piattaforma di scacchi online alimentata da Cloudflare Workers. Gioca umano contro umano, umano contro IA, o guarda battaglie IA contro IA. Classifica ELO, replay partite, multiplayer in tempo reale e 5 modelli IA. Gratuito e supporta 11 lingue.',
-    keywords: 'scacchi,scacchi online,scacchi IA,gioco di scacchi,giocare a scacchi online,IA scacchi,classifica ELO,piattaforma scacchi,scacchi gratis',
-    ogTitle: 'AIChess - Piattaforma Scacchi IA Online',
-    ogDescription: 'Gioca a scacchi online: umano vs umano, umano vs IA, o IA vs IA. 5 modelli IA, classifica ELO, replay partite.'
+    title: 'AIChess - Gioca Contro 5 IA di Scacchi Potenti | Scacchi Gratuiti',
+    description: 'Sfida 5 avversari IA di scacchi unici, dal principiante al gran maestro. Gioca gratis online: umano vs umano, umano vs IA, o guarda battaglie epiche di IA. Sistema di classifica ELO, analisi partite, modalità replay e multiplayer in tempo reale. Disponibile in 11 lingue.',
+    keywords: 'scacchi,scacchi online,IA scacchi,scacchi gratis,giocare a scacchi,gioco di scacchi,scacchi intelligenti,classifica ELO,analisi scacchi,avversari scacchi',
+    ogTitle: 'AIChess - Sfida 5 IA di Scacchi Intelligenti',
+    ogDescription: 'Affronta 5 diversi avversari IA, dal novizio al maestro. Completamente gratuito, gioco in tempo reale, analisi partite, classifica globale.'
   },
   'pt': {
-    title: 'AIChess - Plataforma de Xadrez IA Online | Humano vs IA',
-    description: 'AIChess é uma plataforma de xadrez online alimentada por Cloudflare Workers. Jogue humano contra humano, humano contra IA, ou assista batalhas IA contra IA. Classificação ELO, replay de jogos, multiplayer em tempo real e 5 modelos de IA. Grátis e suporta 11 idiomas.',
-    keywords: 'xadrez,xadrez online,xadrez IA,jogo de xadrez,jogar xadrez online,IA xadrez,classificação ELO,plataforma xadrez,xadrez grátis',
-    ogTitle: 'AIChess - Plataforma de Xadrez IA Online',
-    ogDescription: 'Jogue xadrez online: humano vs humano, humano vs IA, ou IA vs IA. 5 modelos IA, classificação ELO, replay de jogos.'
+    title: 'AIChess - Jogue Contra 5 IA de Xadrez Poderosas | Xadrez Grátis',
+    description: 'Desafie 5 adversários IA de xadrez únicos, do iniciante ao grão-mestre. Jogue grátis online: humano vs humano, humano vs IA, ou assista batalhas épicas de IA. Sistema de classificação ELO, análise de jogos, modo replay e multiplayer em tempo real. Disponível em 11 idiomas.',
+    keywords: 'xadrez,xadrez online,IA xadrez,xadrez grátis,jogar xadrez,jogo de xadrez,xadrez inteligente,classificação ELO,análise xadrez,adversários xadrez',
+    ogTitle: 'AIChess - Desafie 5 IA de Xadrez Inteligentes',
+    ogDescription: 'Enfrente 5 diferentes adversários IA, do novato ao mestre. Completamente grátis, jogo em tempo real, análise de partidas, ranking global.'
   },
   'ru': {
-    title: 'AIChess - Онлайн-платформа шахмат с ИИ | Человек против ИИ',
-    description: 'AIChess - онлайн-платформа для игры в шахматы на базе Cloudflare Workers. Играйте человек против человека, человек против ИИ или смотрите битвы ИИ против ИИ. Рейтинг ELO, повтор игр, мультиплеер в реальном времени и 5 моделей ИИ. Бесплатно и поддерживает 11 языков.',
-    keywords: 'шахматы,шахматы онлайн,шахматы ИИ,шахматная игра,играть в шахматы онлайн,ИИ шахматы,рейтинг ELO,шахматная платформа,бесплатные шахматы',
-    ogTitle: 'AIChess - Онлайн-платформа шахмат с ИИ',
-    ogDescription: 'Играйте в шахматы онлайн: человек против человека, человек против ИИ, или ИИ против ИИ. 5 моделей ИИ, рейтинг ELO, повтор игр.'
+    title: 'AIChess - Играйте Против 5 Мощных Шахматных ИИ | Бесплатные Шахматы',
+    description: 'Бросьте вызов 5 уникальным шахматным ИИ соперникам, от новичка до гроссмейстера. Играйте бесплатно онлайн: человек против человека, человек против ИИ, или смотрите эпические битвы ИИ. Система рейтинга ELO, анализ партий, режим повтора и мультиплеер в реальном времени. Доступно на 11 языках.',
+    keywords: 'шахматы,шахматы онлайн,ИИ шахматы,бесплатные шахматы,играть в шахматы,шахматная игра,умные шахматы,рейтинг ELO,анализ шахмат,шахматные соперники',
+    ogTitle: 'AIChess - Бросьте Вызов 5 Интеллектуальным Шахматным ИИ',
+    ogDescription: 'Сразитесь с 5 различными ИИ соперниками, от новичка до мастера. Полностью бесплатно, игра в реальном времени, анализ партий, глобальный рейтинг.'
   },
   'ja': {
-    title: 'AIChess - オンラインAIチェスプラットフォーム | 人間 vs AI',
-    description: 'AIChessはCloudflare Workersを使用したオンラインチェスプラットフォームです。人間対人間、人間対AI、またはAI対AIの対戦を楽しめます。ELOレーティング、ゲームリプレイ、リアルタイムマルチプレイヤー、5つのAIモデル。無料で11言語をサポート。',
-    keywords: 'チェス,オンラインチェス,AIチェス,チェスゲーム,オンラインでチェスをプレイ,AIチェス,ELOレーティング,チェスプラットフォーム,無料チェス',
-    ogTitle: 'AIChess - オンラインAIチェスプラットフォーム',
-    ogDescription: 'オンラインでチェスをプレイ：人間対人間、人間対AI、またはAI対AI。5つのAIモデル、ELOレーティング、ゲームリプレイ。'
+    title: 'AIChess - 5つの強力なチェスAIと対戦 | 無料オンラインチェス',
+    description: '初心者からグランドマスターレベルまで、5つのユニークなチェスAI対戦相手に挑戦。無料でオンラインプレイ：人間対人間、人間対AI、またはエピックなAIバトルを観戦。ELOレーティングシステム、ゲーム分析、リプレイモード、リアルタイムマルチプレイヤー。11言語に対応。',
+    keywords: 'チェス,オンラインチェス,AIチェス,無料チェス,チェスをプレイ,チェスゲーム,スマートチェス,ELOレーティング,チェス分析,チェス対戦相手',
+    ogTitle: 'AIChess - 5つのインテリジェントチェスAIに挑戦',
+    ogDescription: '初心者からマスターまで5つの異なるAI対戦相手と対戦。完全無料、リアルタイムプレイ、ゲーム分析、グローバルリーダーボード。'
   },
   'ko': {
-    title: 'AIChess - 온라인 AI 체스 플랫폼 | 사람 vs AI',
-    description: 'AIChess는 Cloudflare Workers 기반 온라인 체스 플랫폼입니다. 사람 대 사람, 사람 대 AI, 또는 AI 대 AI 대전을 즐기세요. ELO 등급, 게임 리플레이, 실시간 멀티플레이어, 5개 AI 모델. 무료이며 11개 언어를 지원합니다.',
-    keywords: '체스,온라인 체스,AI 체스,체스 게임,온라인 체스 플레이,AI 체스,ELO 등급,체스 플랫폼,무료 체스',
-    ogTitle: 'AIChess - 온라인 AI 체스 플랫폼',
-    ogDescription: '온라인 체스 플레이: 사람 대 사람, 사람 대 AI, 또는 AI 대 AI. 5개 AI 모델, ELO 등급, 게임 리플레이.'
+    title: 'AIChess - 5가지 강력한 체스 AI와 대결 | 무료 온라인 체스',
+    description: '초보자부터 그랜드마스터 레벨까지, 5가지 독특한 체스 AI 상대에게 도전하세요. 무료 온라인 플레이: 사람 대 사람, 사람 대 AI, 또는 장대한 AI 배틀 관전. ELO 등급 시스템, 게임 분석, 리플레이 모드, 실시간 멀티플레이어. 11개 언어 지원.',
+    keywords: '체스,온라인 체스,AI 체스,무료 체스,체스 플레이,체스 게임,스마트 체스,ELO 등급,체스 분석,체스 상대',
+    ogTitle: 'AIChess - 5가지 지능형 체스 AI에 도전',
+    ogDescription: '초보부터 마스터까지 5가지 다른 AI 상대와 대결. 완전 무료, 실시간 플레이, 게임 분석, 글로벌 리더보드.'
   }
 };
 
