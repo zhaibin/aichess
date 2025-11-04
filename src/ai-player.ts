@@ -1,5 +1,5 @@
 // AI棋手实现
-import { ChessGame } from './chess-utils';
+import { ChessEngine } from './chess-engine';
 import { GameState, AI_MODELS } from './types';
 
 /**
@@ -143,7 +143,7 @@ export async function getAIMove(
         const promotion = move.length > 4 ? move.substring(4, 5) : undefined;
 
         // 验证移动是否合法
-        const chess = new ChessGame(gameState.fen);
+        const chess = new ChessEngine(gameState.fen);
         const moveResult = chess.makeMove(from, to, promotion);
 
         if (moveResult.success) {
@@ -183,7 +183,7 @@ export async function getAIMove(
  */
 function getRandomLegalMove(fen: string): { from: string; to: string; promotion?: string } | null {
   try {
-    const chess = new ChessGame(fen);
+    const chess = new ChessEngine(fen);
     const legalMoves = chess.getLegalMoves();
 
     if (legalMoves.length === 0) {

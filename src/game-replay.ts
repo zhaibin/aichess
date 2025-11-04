@@ -1,7 +1,7 @@
 // 游戏回放功能
 
 import { GameState, Move } from './types';
-import { ChessGame } from './chess-utils';
+import { ChessEngine } from './chess-engine';
 
 export interface ReplayState {
   gameId: string;
@@ -18,12 +18,12 @@ export interface ReplayState {
 export class GameReplay {
   private game: GameState;
   private currentIndex: number;
-  private chess: ChessGame;
+  private chess: ChessEngine;
 
   constructor(game: GameState) {
     this.game = game;
     this.currentIndex = -1;
-    this.chess = new ChessGame();
+    this.chess = new ChessEngine();
   }
 
   /**
@@ -31,7 +31,7 @@ export class GameReplay {
    */
   goToStart(): string {
     this.currentIndex = -1;
-    this.chess = new ChessGame();
+    this.chess = new ChessEngine();
     return this.chess.getFen();
   }
 
@@ -40,7 +40,7 @@ export class GameReplay {
    */
   goToEnd(): string {
     this.currentIndex = this.game.moves.length - 1;
-    this.chess = new ChessGame(this.game.fen);
+    this.chess = new ChessEngine(this.game.fen);
     return this.chess.getFen();
   }
 
@@ -99,7 +99,7 @@ export class GameReplay {
     }
 
     // 重建到指定位置
-    this.chess = new ChessGame();
+    this.chess = new ChessEngine();
     for (let i = 0; i <= index; i++) {
       const move = this.game.moves[i];
       this.chess.makeMove(move.from, move.to, move.promotion);
@@ -177,10 +177,11 @@ export class GameReplay {
    */
   static importPGN(pgn: string): GameState | null {
     try {
-      const chess = new ChessGame();
-      if (!chess.loadPgn(pgn)) {
-        return null;
-      }
+      const chess = new ChessEngine();
+      // PGN导入功能待实现
+      // if (!chess.loadPgn(pgn)) {
+      //   return null;
+      // }
 
       // 解析PGN头部
       const headers: Record<string, string> = {};

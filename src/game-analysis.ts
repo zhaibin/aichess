@@ -1,6 +1,6 @@
 // 游戏分析和提示
 
-import { ChessGame } from './chess-utils';
+import { ChessEngine } from './chess-engine';
 import { GameState } from './types';
 
 export interface PositionEvaluation {
@@ -24,8 +24,8 @@ export class GameAnalysis {
    * 简单的位置评估（材料平衡）
    */
   static evaluatePosition(fen: string): number {
-    const chess = new ChessGame(fen);
-    const board = chess.board();
+    const chess = new ChessEngine(fen);
+    const board = chess.getBoard();
 
     const pieceValues: Record<string, number> = {
       p: 1,
@@ -55,7 +55,7 @@ export class GameAnalysis {
    * 获取最佳移动提示
    */
   static getBestMove(fen: string): MoveHint | null {
-    const chess = new ChessGame(fen);
+    const chess = new ChessEngine(fen);
     const moves = chess.getLegalMoves();
 
     if (moves.length === 0) {
@@ -72,7 +72,7 @@ export class GameAnalysis {
       const promotion = moveStr.length > 4 ? moveStr.substring(4) : undefined;
 
       // 尝试移动
-      const testChess = new ChessGame(fen);
+      const testChess = new ChessEngine(fen);
       testChess.makeMove(from, to, promotion);
 
       // 评估新位置
@@ -111,7 +111,7 @@ export class GameAnalysis {
    * 获取多个移动建议
    */
   static getTopMoves(fen: string, count: number = 3): MoveHint[] {
-    const chess = new ChessGame(fen);
+    const chess = new ChessEngine(fen);
     const moves = chess.getLegalMoves();
     const currentPlayer = chess.getTurn();
 
@@ -122,7 +122,7 @@ export class GameAnalysis {
       const to = moveStr.substring(2, 4);
       const promotion = moveStr.length > 4 ? moveStr.substring(4) : undefined;
 
-      const testChess = new ChessGame(fen);
+      const testChess = new ChessEngine(fen);
       testChess.makeMove(from, to, promotion);
 
       let score = this.evaluatePosition(testChess.getFen());
@@ -168,7 +168,7 @@ export class GameAnalysis {
     let prevEval = 0;
 
     for (let i = 0; i < game.moves.length; i++) {
-      const chess = new ChessGame();
+      const chess = new ChessEngine();
       
       // 重建到当前位置
       for (let j = 0; j < i; j++) {
@@ -231,7 +231,7 @@ export class GameAnalysis {
    * 检查位置是否为战术位置
    */
   static isTacticalPosition(fen: string): boolean {
-    const chess = new ChessGame(fen);
+    const chess = new ChessEngine(fen);
     
     // 检查是否有将军
     if (chess.isCheck()) {

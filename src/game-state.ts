@@ -1,6 +1,6 @@
 // Durable Object实现 - 游戏状态管理
 import { DurableObject } from 'cloudflare:workers';
-import { ChessGame } from './chess-utils';
+import { ChessEngine } from './chess-engine';
 import { GameState, Move, Player, Env, CreateGameRequest } from './types';
 
 export class GameState extends DurableObject {
@@ -112,7 +112,7 @@ export class GameState extends DurableObject {
     const { from, to, promotion } = await request.json();
 
     // 验证移动
-    const chess = new ChessGame(this.game.fen);
+    const chess = new ChessEngine(this.game.fen);
     const moveResult = chess.makeMove(from, to, promotion);
 
     if (!moveResult.success) {

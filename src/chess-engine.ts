@@ -228,7 +228,7 @@ export class ChessEngine {
   /**
    * 执行移动
    */
-  makeMove(from: string, to: string, promotion?: string): { success: boolean; san?: string } {
+  makeMove(from: string, to: string, promotion?: string): { success: boolean; san?: string; fen?: string } {
     const fromSquare = this.algebraicToSquare(from);
     const toSquare = this.algebraicToSquare(to);
 
@@ -263,7 +263,7 @@ export class ChessEngine {
       this.fullMoveNumber++;
     }
 
-    return { success: true, san: `${from}${to}` };
+    return { success: true, san: `${from}${to}`, fen: this.getFen() };
   }
 
   /**
