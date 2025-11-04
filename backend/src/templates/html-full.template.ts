@@ -312,7 +312,7 @@ export function getFullHTMLTemplate(lang: Language): string {
     .move-history {
       flex: 1;
       overflow-y: auto;
-      max-height: 400px;
+      max-height: 300px;
       border: 1px solid #ddd;
       border-radius: 8px;
       padding: 15px;
@@ -322,6 +322,37 @@ export function getFullHTMLTemplate(lang: Language): string {
     .move-history h3 {
       margin-bottom: 10px;
       color: #666;
+    }
+    
+    /* AI思考展示 */
+    .ai-thinking {
+      border: 2px solid #2196f3;
+      border-radius: 8px;
+      padding: 15px;
+      background: #e3f2fd;
+      display: none;
+      margin-top: 15px;
+    }
+    
+    .ai-thinking.show {
+      display: block;
+    }
+    
+    .ai-thinking h4 {
+      color: #1976d2;
+      margin-bottom: 10px;
+      font-size: 1em;
+    }
+    
+    .ai-thinking .thinking-item {
+      font-size: 0.9em;
+      margin: 5px 0;
+      color: #555;
+    }
+    
+    .ai-thinking .thinking-label {
+      font-weight: bold;
+      color: #1976d2;
     }
     
     .move-item {
@@ -725,6 +756,27 @@ export function getFullHTMLTemplate(lang: Language): string {
         <div class="move-history">
           <h3 id="move-history-title">${t('moveHistory')}</h3>
           <div id="move-list"></div>
+        </div>
+        
+        <!-- AI思考展示 -->
+        <div class="ai-thinking" id="ai-thinking">
+          <h4>🧠 AI思考过程</h4>
+          <div class="thinking-item">
+            <span class="thinking-label">阶段:</span>
+            <span id="ai-phase">-</span>
+          </div>
+          <div class="thinking-item">
+            <span class="thinking-label">推理:</span>
+            <span id="ai-reasoning">-</span>
+          </div>
+          <div class="thinking-item">
+            <span class="thinking-label">评估:</span>
+            <span id="ai-evaluation">-</span>
+          </div>
+          <div class="thinking-item">
+            <span class="thinking-label">信心:</span>
+            <span id="ai-confidence">-</span>
+          </div>
         </div>
         
         <div class="game-controls">
