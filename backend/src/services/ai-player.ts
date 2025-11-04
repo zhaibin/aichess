@@ -188,6 +188,11 @@ export async function getAIMove(
   console.log('📋 API格式:', model.type);
   console.log('📋 PGN历史:', gameState.moves.length, '步');
 
+  // ✅ 确定当前玩家
+  const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
+  const colorName = currentPlayer.color === 'w' ? 'White' : 'Black';
+  console.log('📋 当前玩家:', colorName);
+
   const maxRetries = 2; // 减少重试，失败快速降级
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -196,7 +201,6 @@ export async function getAIMove(
       
       // ✅ 极简提示词 - 直接要求JSON格式
       const phase = getGamePhase(gameState.moves.length);
-      const colorName = currentPlayer.color === 'w' ? 'White' : 'Black';
       
       // 获取最近3步
       let recentMoves = '';
