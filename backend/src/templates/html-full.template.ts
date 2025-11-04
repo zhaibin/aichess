@@ -501,10 +501,12 @@ export function getFullHTMLTemplate(lang: Language): string {
     // 初始化
     async function init() {
       if (typeof Chess === 'undefined') {
+        console.log('等待Chess引擎加载...');
         setTimeout(init, 100);
         return;
       }
       
+      console.log('Chess引擎已加载');
       chess = new Chess();
       updateLanguage();
       renderBoard();
@@ -640,8 +642,20 @@ export function getFullHTMLTemplate(lang: Language): string {
     }
     
     function renderBoard() {
+      if (!chess) {
+        console.error('Chess引擎未初始化');
+        return;
+      }
+      
       const board = document.getElementById('chessboard');
+      if (!board) {
+        console.error('棋盘容器未找到');
+        return;
+      }
+      
       board.innerHTML = '';
+      
+      // 使用board()方法获取棋盘数组
       const squares = chess.board();
       
       for (let row = 0; row < 8; row++) {
