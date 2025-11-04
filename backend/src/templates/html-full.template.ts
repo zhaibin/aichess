@@ -966,6 +966,35 @@ export function getFullHTMLTemplate(lang: Language): string {
       if (gameState.mode === 'human-vs-human') {
         console.log('人人对战模式');
         if (selectedSquare) {
+          // 检查是否需要升变
+          const piece = chess.get(selectedSquare);
+          const toSquare = chess.parseSquare(squareName);
+          
+          if (piece && piece.type === 'p' && (toSquare.rank === 7 || toSquare.rank === 0)) {
+            console.log('🎯 兵到达底线，需要升变');
+            showPromotionDialog(piece.color).then(promotion => {
+              if (promotion) {
+                const result = chess.move({ from: selectedSquare, to: squareName, promotion });
+                if (result) {
+                  console.log('本地升变成功:', result);
+                  const now = Date.now();
+                  const elapsed = Math.floor((now - lastMoveTime) / 1000);
+                  const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
+                  currentPlayer.timeRemaining = Math.max(0, currentPlayer.timeRemaining - elapsed);
+                  
+                  renderBoard();
+                  gameState.currentTurn = chess.turn;
+                  updateMoveHistory();
+                  updateGameInfo();
+                  resetTimer();
+                }
+              }
+              selectedSquare = null;
+              clearHighlights();
+            });
+            return;
+          }
+          
           const result = chess.move({ from: selectedSquare, to: squareName });
           if (result) {
             console.log('本地移动成功:', result);
