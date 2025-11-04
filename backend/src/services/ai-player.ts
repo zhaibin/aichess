@@ -4,37 +4,42 @@ import { GameState } from '../types';
 import { AI_MODELS } from '../config/constants';
 
 /**
- * 生成AI棋手的系统提示词（优化版：强调战略思考）
+ * 生成AI棋手的系统提示词（强调目标：将死对方）
  */
 export function getSystemPrompt(): string {
-  return `You are a professional chess grandmaster AI. Analyze the position carefully and play strategically.
+  return `You are a professional chess grandmaster AI in a competitive time-controlled game.
 
-STRATEGIC GUIDELINES:
-- Control the center (d4, d5, e4, e5)
-- Develop pieces early (knights before bishops)
-- Capture opponent's pieces when favorable
-- Protect your king
-- Look for tactical opportunities (forks, pins, skewers)
-- Consider material balance (Queen=9, Rook=5, Bishop/Knight=3, Pawn=1)
+YOUR ULTIMATE GOAL: CHECKMATE the opponent's king (make it unable to escape from check).
+
+WINNING STRATEGIES:
+1. ATTACK - Look for checkmate patterns and attacking moves
+2. MATERIAL - Capture opponent's pieces when it's safe
+3. TACTICS - Use forks, pins, skewers, discovered attacks
+4. KING SAFETY - Castle early (e1→g1 or e1→c1), protect your king
+5. CENTER CONTROL - Occupy/control d4, d5, e4, e5
+6. DEVELOPMENT - Develop knights and bishops before moving queen
+7. PAWN PROMOTION - Push passed pawns to 8th rank, promote to queen
+
+TIME MANAGEMENT:
+- You have LIMITED time (check YOUR TIME below)
+- Play efficiently - don't waste time
+- If time is low (<3 min), play faster, simpler moves
+- If winning, trade pieces to simplify
+- If losing, complicate the position
+
+SPECIAL MOVES:
+- Castling: {"from": "e1", "to": "g1"} (kingside) or {"from": "e1", "to": "c1"} (queenside)
+- Pawn promotion: {"from": "e7", "to": "e8", "promotion": "q"}
 
 RESPONSE FORMAT (STRICT):
-Return ONLY a JSON object:
+Return ONLY a JSON object, NO explanations:
 {"from": "e2", "to": "e4"}
 
-For pawn promotion:
-{"from": "e7", "to": "e8", "promotion": "q"}
-
-EXAMPLES:
-- Normal: {"from": "e2", "to": "e4"}
-- Capture: {"from": "d4", "to": "e5"}
-- Castle: {"from": "e1", "to": "g1"}
-- Promotion: {"from": "a7", "to": "a8", "promotion": "q"}
-
 CRITICAL:
-- Return ONLY JSON, NO text
 - Move MUST be legal
-- Think strategically, not randomly
-- Use lowercase (a-h, 1-8)`;
+- Think strategically to WIN
+- Use lowercase (a-h, 1-8)
+- Consider the POSITION, HISTORY, and TIME`;
 }
 
 /**
@@ -64,20 +69,39 @@ export function getUserPrompt(gameState: GameState): string {
   }
 
   const colorName = currentPlayer.color === 'w' ? 'White' : 'Black';
-  const mins = Math.floor(currentPlayer.timeRemaining / 60);
-  const secs = currentPlayer.timeRemaining % 60;
+  const yourMins = Math.floor(currentPlayer.timeRemaining / 60);
+  const yourSecs = currentPlayer.timeRemaining % 60;
+  const oppMins = Math.floor(opponent.timeRemaining / 60);
+  const oppSecs = opponent.timeRemaining % 60;
+  
+  // 时间压力提示
+  let timePressure = '';
+  if (currentPlayer.timeRemaining < 180) {
+    timePressure = '\n⚠️ TIME PRESSURE! You have less than 3 minutes - play faster!';
+  } else if (currentPlayer.timeRemaining < 300) {
+    timePressure = '\n⏰ Time is running low - be efficient!';
+  }
 
-  return `POSITION (FEN):
+  return `CURRENT POSITION (FEN):
 ${gameState.fen}
 
-YOU PLAY: ${colorName}
-MOVE HISTORY (PGN):
+YOU ARE: ${colorName} (${currentPlayer.color === 'w' ? 'bottom ranks 1-2' : 'top ranks 7-8'})
+
+GAME HISTORY (PGN):
 ${pgnHistory.trim()}
+Total moves: ${gameState.moves.length}
 
-YOUR TIME: ${mins}:${secs.toString().padStart(2, '0')}
-OPPONENT TIME: ${Math.floor(opponent.timeRemaining / 60)}:${(opponent.timeRemaining % 60).toString().padStart(2, '0')}
+TIME REMAINING:
+YOUR TIME: ${yourMins}:${yourSecs.toString().padStart(2, '0')} ⏱️${timePressure}
+OPPONENT TIME: ${oppMins}:${oppSecs.toString().padStart(2, '0')}
 
-Make your move (JSON format only):`;
+ANALYZE THE POSITION:
+- What are your tactical opportunities?
+- Can you checkmate or win material?
+- Is your king safe?
+- What is your opponent threatening?
+
+YOUR MOVE (JSON only):`;
 }
 
 /**
