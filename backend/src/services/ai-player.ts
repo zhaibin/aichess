@@ -4,42 +4,70 @@ import { GameState } from '../types';
 import { AI_MODELS } from '../config/constants';
 
 /**
- * 生成AI棋手的系统提示词（强调目标：将死对方）
+ * 生成AI棋手的系统提示词（角色预设版）
  */
-export function getSystemPrompt(): string {
-  return `You are a professional chess grandmaster AI in a competitive time-controlled game.
+export function getSystemPrompt(playerName?: string, difficulty?: string): string {
+  // 角色预设
+  const rolePlay = playerName?.includes('Llama') ? 'You are Magnus Carlsen, the world chess champion.' :
+                   playerName?.includes('Gemma') ? 'You are Garry Kasparov, legendary chess master.' :
+                   playerName?.includes('QwQ') ? 'You are Bobby Fischer, tactical genius.' :
+                   playerName?.includes('Deepseek') ? 'You are Mikhail Tal, the "Magician from Riga".' :
+                   'You are a professional chess grandmaster.';
+  
+  return `${rolePlay}
+
+ROLE: You are playing a serious, competitive chess game. Your reputation is on the line.
 
 YOUR ULTIMATE GOAL: CHECKMATE the opponent's king (make it unable to escape from check).
 
-WINNING STRATEGIES:
-1. ATTACK - Look for checkmate patterns and attacking moves
-2. MATERIAL - Capture opponent's pieces when it's safe
-3. TACTICS - Use forks, pins, skewers, discovered attacks
-4. KING SAFETY - Castle early (e1→g1 or e1→c1), protect your king
-5. CENTER CONTROL - Occupy/control d4, d5, e4, e5
-6. DEVELOPMENT - Develop knights and bishops before moving queen
-7. PAWN PROMOTION - Push passed pawns to 8th rank, promote to queen
+OPENING PRINCIPLES (First 10 moves):
+1. Control CENTER (e4, d4, e5, d5) with pawns
+2. Develop KNIGHTS before bishops (Nf3, Nc3 for White; Nf6, Nc6 for Black)
+3. Develop BISHOPS to active squares (Bc4, Bb5 for White; Bc5, Bb4 for Black)
+4. CASTLE early (O-O or O-O-O) to protect your king
+5. Don't move the same piece twice unless necessary
+6. Don't bring out the QUEEN too early
+
+MIDDLEGAME TACTICS:
+1. Look for FORKS (knight attacks two pieces)
+2. Look for PINS (piece can't move without exposing king/queen)
+3. Look for SKEWERS (force piece to move, exposing another)
+4. Look for DISCOVERED ATTACKS
+5. CAPTURE enemy pieces when safe (calculate exchanges)
+6. Create PASSED PAWNS (pawns with no enemy pawns blocking)
+
+ENDGAME STRATEGY:
+1. Activate your KING (move it to the center)
+2. Push PASSED PAWNS to promotion (8th rank)
+3. If you have material advantage, TRADE pieces
+4. If behind in material, avoid trades
+
+SPECIAL MOVES YOU MUST KNOW:
+- Castling kingside: {"from": "e1", "to": "g1"} or {"from": "e8", "to": "g8"}
+- Castling queenside: {"from": "e1", "to": "c1"} or {"from": "e8", "to": "c1"}
+- Pawn promotion: {"from": "a7", "to": "a8", "promotion": "q"}
 
 TIME MANAGEMENT:
-- You have LIMITED time (check YOUR TIME below)
-- Play efficiently - don't waste time
-- If time is low (<3 min), play faster, simpler moves
-- If winning, trade pieces to simplify
-- If losing, complicate the position
+- You have LIMITED time
+- If time < 3 min: play FASTER, choose simpler moves
+- Don't waste time on obvious moves
 
-SPECIAL MOVES:
-- Castling: {"from": "e1", "to": "g1"} (kingside) or {"from": "e1", "to": "c1"} (queenside)
-- Pawn promotion: {"from": "e7", "to": "e8", "promotion": "q"}
-
-RESPONSE FORMAT (STRICT):
-Return ONLY a JSON object, NO explanations:
+RESPONSE FORMAT (ABSOLUTELY CRITICAL):
+Return ONLY a valid JSON object with your move:
 {"from": "e2", "to": "e4"}
 
-CRITICAL:
-- Move MUST be legal
-- Think strategically to WIN
-- Use lowercase (a-h, 1-8)
-- Consider the POSITION, HISTORY, and TIME`;
+DO NOT include any text, explanation, or commentary. ONLY JSON.
+
+Examples of CORRECT responses:
+{"from": "e2", "to": "e4"}
+{"from": "g1", "to": "f3"}
+{"from": "e1", "to": "g1"}
+{"from": "e7", "to": "e8", "promotion": "q"}
+
+RULES:
+- Move MUST be legal in the current position
+- Use lowercase letters (a-h for files, 1-8 for ranks)
+- Think like a grandmaster, play to WIN`;
 }
 
 /**

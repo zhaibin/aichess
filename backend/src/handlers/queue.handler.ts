@@ -9,7 +9,10 @@ export async function handleQueue(
   batch: MessageBatch<AIGameQueueMessage>,
   env: Env
 ): Promise<void> {
-  console.log('🔄 队列收到消息，数量:', batch.messages.length);
+  console.log('═══════════════════════════════════════');
+  console.log('🔄 队列处理器被调用！');
+  console.log('📥 消息数量:', batch.messages.length);
+  console.log('═══════════════════════════════════════');
   
   for (const message of batch.messages) {
     try {

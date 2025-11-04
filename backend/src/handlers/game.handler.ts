@@ -54,15 +54,28 @@ export async function handleCreateGame(
 
     // AI vs AI游戏，发送到队列启动
     if (game.mode === 'ai-vs-ai') {
-      console.log('🤖 AI vs AI游戏，发送首步到队列');
-      console.log('📤 队列消息:', { gameId: game.id, currentPlayer: 'w' });
+      console.log('═══════════════════════════════════════');
+      console.log('🤖 AI vs AI游戏，准备发送到队列');
+      console.log('📋 游戏ID:', game.id);
+      console.log('📋 白方:', game.whitePlayer.name, '(', game.whitePlayer.aiModel, ')');
+      console.log('📋 黑方:', game.blackPlayer.name, '(', game.blackPlayer.aiModel, ')');
+      console.log('═══════════════════════════════════════');
       
-      await env.AI_GAME_QUEUE.send({
-        gameId: game.id, // ✅ 使用返回的game.id
-        currentPlayer: 'w'
-      });
-      
-      console.log('✅ 队列消息已发送');
+      try {
+        const queueMessage = {
+          gameId: game.id,
+          currentPlayer: 'w'
+        };
+        console.log('📤 发送队列消息:', JSON.stringify(queueMessage));
+        
+        await env.AI_GAME_QUEUE.send(queueMessage);
+        
+        console.log('✅ 队列消息已成功发送！');
+        console.log('💡 队列应该会在几秒内开始处理...');
+      } catch (error) {
+        console.error('❌ 发送队列消息失败:', error);
+        console.error('错误详情:', error instanceof Error ? error.message : String(error));
+      }
     }
 
     return new Response(JSON.stringify(game), {
