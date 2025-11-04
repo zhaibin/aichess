@@ -31,7 +31,7 @@ export default {
       'X-XSS-Protection': '1; mode=block',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
-      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' wss: https:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';"
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' wss: https:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';"
     };
 
     // 处理OPTIONS预检请求
@@ -1152,10 +1152,7 @@ ${getSEOTags(lang)}
     const t = (key) => translations[currentLanguage]?.[key] || translations['en'][key] || key;
 
     // 初始化
-        "appName": "AI国际象棋",
-        "newGame": "新游戏",
-        "humanVsHuman": "人人对战",
-        "humanVsAI": "人机对战",
+    async function init() {
         "aiVsAI": "AI对战",
         "timeControl": "时间控制",
         "minutes5": "5分钟",
@@ -1577,8 +1574,6 @@ ${getSEOTags(lang)}
         "timeout": "시간 초과",
         "gameHistory": "게임 기록",
         "replay": "다시보기",
-        "continue": "계속하기",
-    async function init() {
       // 确保Chess库已加载
       if (typeof Chess === 'undefined') {
         console.error('Chess.js not loaded yet');
@@ -2057,8 +2052,8 @@ ${getSEOTags(lang)}
     }
   </script>
   
-  <!-- Chess.js库（最后加载） -->
-  <script src="https://unpkg.com/chess.js@1.4.0/chess.min.js"></script>
+  <!-- Chess.js库（最后加载，使用jsdelivr CDN） -->
+  <script src="https://cdn.jsdelivr.net/npm/chess.js@1.4.0/chess.min.js"></script>
 </body>
 </html>`;
 }
