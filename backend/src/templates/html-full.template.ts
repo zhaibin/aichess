@@ -166,11 +166,16 @@ export function getFullHTMLTemplate(lang: Language): string {
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
     
-    #chessboard {
+    .board-wrapper {
+      position: relative;
       width: 100%;
       max-width: 800px;
-      aspect-ratio: 1;
       margin: 0 auto;
+    }
+    
+    #chessboard {
+      width: 100%;
+      aspect-ratio: 1;
       display: grid;
       grid-template-columns: repeat(8, 1fr);
       grid-template-rows: repeat(8, 1fr);
@@ -178,6 +183,45 @@ export function getFullHTMLTemplate(lang: Language): string {
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    
+    /* 坐标标注 */
+    .coordinates {
+      position: absolute;
+      font-weight: bold;
+      color: #333;
+      font-size: 0.9em;
+      user-select: none;
+    }
+    
+    .file-coords {
+      bottom: -25px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-around;
+    }
+    
+    .file-coord {
+      flex: 1;
+      text-align: center;
+    }
+    
+    .rank-coords {
+      position: absolute;
+      left: -25px;
+      top: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column-reverse;
+      justify-content: space-around;
+    }
+    
+    .rank-coord {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
     .square {

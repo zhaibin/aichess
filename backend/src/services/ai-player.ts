@@ -88,17 +88,11 @@ export async function getAIMove(
 ): Promise<{ from: string; to: string; promotion?: string } | null> {
   console.log('🎮 getAIMove被调用, 模型:', aiModel);
   
-  // ⚠️ 临时降级：直接使用随机移动，跳过Workers AI
-  // TODO: 调试Workers AI绑定问题
-  console.log('⚠️ 暂时跳过Workers AI，使用随机合法移动');
-  return getRandomLegalMove(gameState);
-  
-  /* 暂时注释掉Workers AI调用
   const model = AI_MODELS[aiModel];
   if (!model) {
     console.error('❌ 无效的AI模型:', aiModel);
     console.log('可用模型:', Object.keys(AI_MODELS));
-    // 使用默认模型
+    // 使用随机移动作为降级
     console.log('⚠️ 使用随机移动作为降级');
     return getRandomLegalMove(gameState);
   }
@@ -193,7 +187,6 @@ export async function getAIMove(
   // 所有重试失败，返回随机合法移动
   console.log('⚠️ AI所有尝试失败，使用随机合法移动');
   return getRandomLegalMove(gameState);
-  */
 }
 
 /**
