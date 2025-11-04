@@ -673,6 +673,7 @@ export function getFullHTMLTemplate(lang: Language): string {
       
       // 使用board()方法获取棋盘数组
       const squares = chess.board();
+      console.log('渲染棋盘, chess.turn:', chess.turn);
       
       for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
@@ -692,6 +693,11 @@ export function getFullHTMLTemplate(lang: Language): string {
           square.addEventListener('click', () => handleSquareClick(square));
           board.appendChild(square);
         }
+      }
+      
+      // 显示当前回合提示
+      if (gameState && gameState.status === 'active') {
+        console.log('📌 当前回合:', gameState.currentTurn === 'w' ? '白方(底部1-2行)' : '黑方(顶部7-8行)');
       }
     }
     
@@ -736,11 +742,14 @@ export function getFullHTMLTemplate(lang: Language): string {
           clearHighlights();
         } else {
           const piece = chess.get(squareName);
-          console.log('选择棋子:', piece);
+          console.log('选择棋子:', piece, 'chess.turn:', chess.turn);
           if (piece && piece.color === chess.turn) {
             selectedSquare = squareName;
             highlightSquare(square);
-            console.log('棋子已选中');
+            console.log('✅ 棋子已选中:', squareName);
+          } else if (piece && piece.color !== chess.turn) {
+            console.log('❌ 不是当前回合的棋子！当前回合:', chess.turn === 'w' ? '白方' : '黑方', '你点击的是:', piece.color === 'w' ? '白棋' : '黑棋');
+            alert(t('yourTurn') + ': ' + (chess.turn === 'w' ? t('whitePlayer') : t('blackPlayer')));
           }
         }
         return;
@@ -778,8 +787,9 @@ export function getFullHTMLTemplate(lang: Language): string {
             selectedSquare = squareName;
             highlightSquare(square);
             console.log('✅ 棋子已选中:', squareName);
-          } else if (piece) {
-            console.log('❌ 不是你的棋子');
+          } else if (piece && piece.color !== gameState.currentTurn) {
+            console.log('❌ 不是你的回合！当前回合:', gameState.currentTurn === 'w' ? '白方(第1-2行)' : '黑方(第7-8行)');
+            alert('当前是' + (gameState.currentTurn === 'w' ? '白方' : '黑方') + '的回合！');
           }
         }
       }
