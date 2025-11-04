@@ -685,6 +685,41 @@ export function getFullHTMLTemplate(lang: Language): string {
   </div>
   
   <div class="container">
+    <!-- 顶部Logo和导航 -->
+    <header class="site-header">
+      <div class="logo-section">
+        <svg class="logo-icon" viewBox="0 0 64 64" width="48" height="48">
+          <defs>
+            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <rect x="8" y="8" width="48" height="48" fill="url(#logoGrad)" rx="4"/>
+          <rect x="8" y="8" width="12" height="12" fill="#fff" opacity="0.3"/>
+          <rect x="32" y="8" width="12" height="12" fill="#fff" opacity="0.3"/>
+          <rect x="20" y="20" width="12" height="12" fill="#fff" opacity="0.3"/>
+          <rect x="44" y="20" width="12" height="12" fill="#fff" opacity="0.3"/>
+          <rect x="8" y="32" width="12" height="12" fill="#fff" opacity="0.3"/>
+          <rect x="32" y="32" width="12" height="12" fill="#fff" opacity="0.3"/>
+          <rect x="20" y="44" width="12" height="12" fill="#fff" opacity="0.3"/>
+          <rect x="44" y="44" width="12" height="12" fill="#fff" opacity="0.3"/>
+          <circle cx="32" cy="32" r="16" fill="#FFD700" opacity="0.9"/>
+          <text x="32" y="38" font-size="20" font-weight="bold" text-anchor="middle" fill="#333">AI</text>
+        </svg>
+        <div class="logo-text">
+          <h1>AIChess</h1>
+          <p class="tagline">Intelligent Chess Platform</p>
+        </div>
+      </div>
+      <nav class="top-nav">
+        <a href="/about?lang=${lang}" target="_blank" id="about-link-top">${t('about')}</a>
+        <a href="/privacy?lang=${lang}" target="_blank" id="privacy-link-top">${t('privacy')}</a>
+        <a href="/terms?lang=${lang}" target="_blank" id="terms-link-top">${t('terms')}</a>
+      </nav>
+    </header>
+    
+    <div class="main-content">
     <!-- 游戏设置侧边栏 -->
     <div class="game-setup-sidebar" id="game-setup">
       <button class="close-setup" onclick="closeGameSetup()">×</button>
