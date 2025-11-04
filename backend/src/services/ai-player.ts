@@ -88,6 +88,12 @@ export async function getAIMove(
 ): Promise<{ from: string; to: string; promotion?: string } | null> {
   console.log('🎮 getAIMove被调用, 模型:', aiModel);
   
+  // ⚠️ Workers AI API格式问题未解决，暂时使用随机移动
+  console.log('⚠️ Workers AI调试中，使用随机合法移动作为AI');
+  console.log('💡 AI会选择随机但合法的移动');
+  return getRandomLegalMove(gameState);
+  
+  /* Workers AI调试中 - API格式问题
   // 检查env.AI是否存在
   if (!env || !env.AI) {
     console.error('❌ Workers AI未绑定！env.AI不存在');
@@ -243,6 +249,7 @@ export async function getAIMove(
 
   // 不应该到这里
   throw new Error('AI调用逻辑错误');
+  */
 }
 
 /**

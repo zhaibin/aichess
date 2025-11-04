@@ -296,14 +296,36 @@ class ChessEngine {
   }
   
   isInsufficientMaterial() {
-    // 简化版：只有王时为和棋
-    let pieceCount = 0;
+    // 统计棋子
+    let whitePieces = { k: 0, q: 0, r: 0, b: 0, n: 0, p: 0 };
+    let blackPieces = { k: 0, q: 0, r: 0, b: 0, n: 0, p: 0 };
+    
     for (let rank = 0; rank < 8; rank++) {
       for (let file = 0; file < 8; file++) {
-        if (this._board[rank][file]) pieceCount++;
+        const piece = this._board[rank][file];
+        if (piece) {
+          if (piece.color === 'w') whitePieces[piece.type]++;
+          else blackPieces[piece.type]++;
+        }
       }
     }
-    return pieceCount === 2; // 只剩两个王
+    
+    // 只有两个王
+    if (whitePieces.k === 1 && blackPieces.k === 1) {
+      const totalPieces = Object.values(whitePieces).reduce((a,b) => a+b, 0) + 
+                          Object.values(blackPieces).reduce((a,b) => a+b, 0);
+      
+      // 1. 王 vs 王
+      if (totalPieces === 2) return true;
+      
+      // 2. 王+马 vs 王 或 王 vs 王+马
+      if (totalPieces === 3 && (whitePieces.n === 1 || blackPieces.n === 1)) return true;
+      
+      // 3. 王+象 vs 王 或 王 vs 王+象
+      if (totalPieces === 3 && (whitePieces.b === 1 || blackPieces.b === 1)) return true;
+    }
+    
+    return false;
   }
   
   isGameOver() {
