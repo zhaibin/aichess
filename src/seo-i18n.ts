@@ -157,7 +157,7 @@ export function getLanguageFromURL(url: string): Language {
     // URL解析失败，使用默认语言
   }
   
-  return 'zh-CN'; // 默认简体中文
+  return 'en'; // 默认英语
 }
 
 /**
@@ -206,6 +206,6 @@ export function getLanguageFromHeader(acceptLanguage: string | null): Language {
     }
   }
   
-  return 'zh-CN';
+  return 'en'; // 默认英语
 }
 

@@ -40,7 +40,9 @@ export const translations: Record<Language, Record<string, string>> = {
     gameHistory: '对局历史',
     replay: '回放',
     continue: '继续对局',
-    language: '语言'
+    language: '语言',
+    welcomeText: '点击左上角"新游戏"按钮开始对弈',
+    welcomeFeatures: '🤖 5种AI棋手 | 💯 完全免费 | 🌍 11种语言'
   },
   'zh-TW': {
     appName: 'AI國際象棋',
@@ -79,7 +81,9 @@ export const translations: Record<Language, Record<string, string>> = {
     gameHistory: '對局歷史',
     replay: '回放',
     continue: '繼續對局',
-    language: '語言'
+    language: '語言',
+    welcomeText: '點擊左上角「新遊戲」按鈕開始對弈',
+    welcomeFeatures: '🤖 5種AI棋手 | 💯 完全免費 | 🌍 11種語言'
   },
   'en': {
     appName: 'AI Chess',
@@ -118,7 +122,9 @@ export const translations: Record<Language, Record<string, string>> = {
     gameHistory: 'Game History',
     replay: 'Replay',
     continue: 'Continue Game',
-    language: 'Language'
+    language: 'Language',
+    welcomeText: 'Click "New Game" button to start playing',
+    welcomeFeatures: '🤖 5 AI Players | 💯 Free | 🌍 11 Languages'
   },
   'fr': {
     appName: 'Échecs IA',
@@ -157,7 +163,9 @@ export const translations: Record<Language, Record<string, string>> = {
     gameHistory: 'Historique des Parties',
     replay: 'Rejouer',
     continue: 'Continuer',
-    language: 'Langue'
+    language: 'Langue',
+    welcomeText: 'Cliquez sur "Nouvelle Partie" pour commencer',
+    welcomeFeatures: '🤖 5 IA | 💯 Gratuit | 🌍 11 Langues'
   },
   'es': {
     appName: 'Ajedrez IA',
@@ -196,7 +204,9 @@ export const translations: Record<Language, Record<string, string>> = {
     gameHistory: 'Historial de Partidas',
     replay: 'Repetir',
     continue: 'Continuar',
-    language: 'Idioma'
+    language: 'Idioma',
+    welcomeText: 'Haz clic en "Nueva Partida" para comenzar',
+    welcomeFeatures: '🤖 5 IA | 💯 Gratis | 🌍 11 Idiomas'
   },
   'de': {
     appName: 'KI-Schach',
@@ -235,7 +245,9 @@ export const translations: Record<Language, Record<string, string>> = {
     gameHistory: 'Spielhistorie',
     replay: 'Wiederholen',
     continue: 'Fortsetzen',
-    language: 'Sprache'
+    language: 'Sprache',
+    welcomeText: 'Klicken Sie auf "Neues Spiel" um zu beginnen',
+    welcomeFeatures: '🤖 5 KI | 💯 Kostenlos | 🌍 11 Sprachen'
   },
   'it': {
     appName: 'Scacchi IA',
@@ -274,7 +286,9 @@ export const translations: Record<Language, Record<string, string>> = {
     gameHistory: 'Cronologia Partite',
     replay: 'Replay',
     continue: 'Continua',
-    language: 'Lingua'
+    language: 'Lingua',
+    welcomeText: 'Clicca su "Nuova Partita" per iniziare',
+    welcomeFeatures: '🤖 5 IA | 💯 Gratuito | 🌍 11 Lingue'
   },
   'pt': {
     appName: 'Xadrez IA',
@@ -313,7 +327,9 @@ export const translations: Record<Language, Record<string, string>> = {
     gameHistory: 'Histórico de Jogos',
     replay: 'Repetir',
     continue: 'Continuar',
-    language: 'Idioma'
+    language: 'Idioma',
+    welcomeText: 'Clique em "Novo Jogo" para começar',
+    welcomeFeatures: '🤖 5 IA | 💯 Grátis | 🌍 11 Idiomas'
   },
   'ru': {
     appName: 'Шахматы ИИ',
@@ -352,7 +368,9 @@ export const translations: Record<Language, Record<string, string>> = {
     gameHistory: 'История Игр',
     replay: 'Повтор',
     continue: 'Продолжить',
-    language: 'Язык'
+    language: 'Язык',
+    welcomeText: 'Нажмите "Новая Игра" чтобы начать',
+    welcomeFeatures: '🤖 5 ИИ | 💯 Бесплатно | 🌍 11 Языков'
   },
   'ja': {
     appName: 'AIチェス',
@@ -391,7 +409,9 @@ export const translations: Record<Language, Record<string, string>> = {
     gameHistory: '対局履歴',
     replay: 'リプレイ',
     continue: '続行',
-    language: '言語'
+    language: '言語',
+    welcomeText: '「新しいゲーム」をクリックして開始',
+    welcomeFeatures: '🤖 5つのAI | 💯 無料 | 🌍 11言語'
   },
   'ko': {
     appName: 'AI 체스',
@@ -430,11 +450,27 @@ export const translations: Record<Language, Record<string, string>> = {
     gameHistory: '게임 기록',
     replay: '다시보기',
     continue: '계속하기',
-    language: '언어'
+    language: '언어',
+    welcomeText: '"새 게임" 버튼을 클릭하여 시작',
+    welcomeFeatures: '🤖 5개 AI | 💯 무료 | 🌍 11개 언어'
   }
 };
 
 export function getTranslation(lang: Language, key: string): string {
   return translations[lang]?.[key] || translations['en'][key] || key;
+}
+
+/**
+ * 获取所有翻译（用于前端）
+ */
+export function getAllTranslations(): Record<Language, Record<string, string>> {
+  return translations;
+}
+
+/**
+ * 获取默认语言
+ */
+export function getDefaultLanguage(): Language {
+  return 'en';
 }
 
