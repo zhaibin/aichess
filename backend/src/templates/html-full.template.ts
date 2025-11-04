@@ -197,6 +197,10 @@ export function getFullHTMLTemplate(lang: Language): string {
       box-shadow: inset 0 0 0 3px #4caf50;
     }
     
+    .square.can-move {
+      box-shadow: inset 0 0 0 2px rgba(76, 175, 80, 0.3);
+    }
+    
     @media (max-width: 768px) {
       .square { font-size: 2.5em; }
     }
@@ -289,7 +293,23 @@ export function getFullHTMLTemplate(lang: Language): string {
     .move-number {
       font-weight: bold;
       color: #666;
-      min-width: 30px;
+      min-width: 35px;
+      display: inline-block;
+    }
+    
+    .white-move {
+      color: #333;
+      font-weight: 600;
+      margin-right: 12px;
+      min-width: 50px;
+      display: inline-block;
+    }
+    
+    .black-move {
+      color: #666;
+      font-weight: 600;
+      min-width: 50px;
+      display: inline-block;
     }
     
     /* 欢迎消息 */
@@ -523,7 +543,9 @@ export function getFullHTMLTemplate(lang: Language): string {
     let selectedSquare = null;
     let chess = null;
     let updateInterval = null;
+    let timerInterval = null;
     let currentLanguage = '${lang}';
+    let lastMoveTime = Date.now();
     
     // 翻译
     const translations = ${JSON.stringify(translations)};
@@ -667,6 +689,9 @@ export function getFullHTMLTemplate(lang: Language): string {
         renderBoard();
         updateGameInfo();
         
+        // 启动倒计时（所有游戏模式）
+        startGameTimer();
+        
         // 开始轮询游戏状态（只对AI vs AI模式）
         if (updateInterval) clearInterval(updateInterval);
         if (gameState.mode === 'ai-vs-ai') {
@@ -738,6 +763,28 @@ export function getFullHTMLTemplate(lang: Language): string {
       if (gameState && gameState.status === 'active') {
         console.log('📌 当前回合:', gameState.currentTurn === 'w' ? '白方(底部1-2行)' : '黑方(顶部7-8行)');
       }
+      
+      // 高亮当前回合的所有棋子
+      highlightCurrentTurnPieces();
+    }
+    
+    // 高亮当前回合的所有棋子（视觉提示）
+    function highlightCurrentTurnPieces() {
+      const currentColor = gameState ? gameState.currentTurn : chess.turn;
+      const squares = document.querySelectorAll('.square');
+      
+      squares.forEach(sq => {
+        const squareName = sq.dataset.square;
+        const piece = chess.get(squareName);
+        
+        // 移除旧的高亮
+        sq.classList.remove('can-move');
+        
+        // 如果是当前回合的棋子，添加淡淡的高亮
+        if (piece && piece.color === currentColor) {
+          sq.classList.add('can-move');
+        }
+      });
     }
     
     async function handleSquareClick(square) {
@@ -753,6 +800,9 @@ export function getFullHTMLTemplate(lang: Language): string {
             console.log('练习移动成功');
             renderBoard();
             updateMoveHistory(); // 更新行棋历史
+            
+            // 自动选中下一回合棋子（可选）
+            highlightCurrentTurnPieces();
           }
           selectedSquare = null;
           clearHighlights();
@@ -775,9 +825,18 @@ export function getFullHTMLTemplate(lang: Language): string {
           const result = chess.move({ from: selectedSquare, to: squareName });
           if (result) {
             console.log('本地移动成功:', result);
+            
+            // 更新当前玩家剩余时间
+            const now = Date.now();
+            const elapsed = Math.floor((now - lastMoveTime) / 1000);
+            const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
+            currentPlayer.timeRemaining = Math.max(0, currentPlayer.timeRemaining - elapsed);
+            
             renderBoard();
             gameState.currentTurn = chess.turn;
             updateMoveHistory(); // 更新行棋历史
+            updateGameInfo(); // 更新信息（包括倒计时）
+            resetTimer(); // 重置计时器
           }
           selectedSquare = null;
           clearHighlights();
@@ -1002,6 +1061,51 @@ export function getFullHTMLTemplate(lang: Language): string {
       }, 200);
     }
     
+    // 启动游戏倒计时
+    function startGameTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      
+      lastMoveTime = Date.now();
+      
+      timerInterval = setInterval(() => {
+        if (!gameState || gameState.status !== 'active') {
+          if (timerInterval) clearInterval(timerInterval);
+          return;
+        }
+        
+        const now = Date.now();
+        const elapsed = Math.floor((now - lastMoveTime) / 1000);
+        
+        // 扣除当前回合玩家的时间
+        const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
+        const newTime = currentPlayer.timeRemaining - elapsed;
+        
+        if (newTime <= 0) {
+          // 时间用完，判负
+          currentPlayer.timeRemaining = 0;
+          gameState.status = 'timeout';
+          gameState.winner = gameState.currentTurn === 'w' ? 'b' : 'w';
+          
+          if (timerInterval) clearInterval(timerInterval);
+          
+          alert((gameState.currentTurn === 'w' ? t('whitePlayer') : t('blackPlayer')) + ' ' + t('timeout') + '! ' + 
+                (gameState.winner === 'w' ? t('whitePlayer') : t('blackPlayer')) + ' ' + t('whiteWins'));
+          return;
+        }
+        
+        // 更新显示
+        updateTimer(gameState.currentTurn === 'w' ? 'white-timer' : 'black-timer', newTime);
+      }, 100); // 每0.1秒更新一次，更精确
+      
+      console.log('⏱️ 倒计时已启动');
+    }
+    
+    // 重置倒计时（移动后调用）
+    function resetTimer() {
+      lastMoveTime = Date.now();
+      console.log('⏱️ 倒计时重置');
+    }
+    
     function updateTimer(id, seconds) {
       const el = document.getElementById(id);
       if (!el) return;
@@ -1026,34 +1130,46 @@ export function getFullHTMLTemplate(lang: Language): string {
         return;
       }
       
-      // 本地模式：显示chess引擎的历史
+      // 本地模式：显示chess引擎的历史（PGN格式）
       if (!gameState || !gameState.moves || gameState.moves.length === 0) {
         if (chess && chess.history) {
           const history = chess.history();
           console.log('使用chess引擎历史:', history);
           moveList.innerHTML = '';
-          for (let i = 0; i < history.length; i++) {
+          
+          // 按照PGN格式显示：1.e4 e5 2.Nf3 Nc6
+          for (let i = 0; i < history.length; i += 2) {
             const moveEl = document.createElement('div');
             moveEl.className = 'move-item';
-            moveEl.innerHTML = '<span class="move-number">' + (Math.floor(i/2) + 1) + '.</span> ' + history[i];
+            const moveNum = Math.floor(i/2) + 1;
+            const whiteMove = history[i];
+            const blackMove = history[i + 1] || '';
+            moveEl.innerHTML = '<span class="move-number">' + moveNum + '.</span> ' + 
+                               '<span class="white-move">' + whiteMove + '</span> ' +
+                               (blackMove ? '<span class="black-move">' + blackMove + '</span>' : '');
             moveList.appendChild(moveEl);
           }
         } else {
-          moveList.innerHTML = '<div style="color: #999;">暂无移动</div>';
+          moveList.innerHTML = '<div style="color: #999; padding: 10px;">' + t('moveHistory') + '</div>';
         }
         return;
       }
       
-      // 游戏模式：显示gameState的历史
+      // 游戏模式：显示gameState的历史（PGN格式）
       console.log('使用gameState历史:', gameState.moves);
       moveList.innerHTML = '';
-      for (let i = 0; i < gameState.moves.length; i++) {
-        const move = gameState.moves[i];
+      
+      // 按照标准记谱格式：1.e4 e5 2.Nf3 Nc6
+      for (let i = 0; i < gameState.moves.length; i += 2) {
         const moveEl = document.createElement('div');
         moveEl.className = 'move-item';
         const moveNum = Math.floor(i/2) + 1;
-        const color = i % 2 === 0 ? '⚪' : '⚫';
-        moveEl.innerHTML = '<span class="move-number">' + moveNum + '.</span> ' + color + ' ' + move.san;
+        const whiteMove = gameState.moves[i];
+        const blackMove = gameState.moves[i + 1];
+        
+        moveEl.innerHTML = '<span class="move-number">' + moveNum + '.</span> ' +
+                           '<span class="white-move">' + whiteMove.san + '</span> ' +
+                           (blackMove ? '<span class="black-move">' + blackMove.san + '</span>' : '');
         moveList.appendChild(moveEl);
       }
       
