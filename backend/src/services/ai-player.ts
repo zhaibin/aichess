@@ -2,7 +2,7 @@
 import { ChessEngine } from './chess-engine';
 import { GameState } from '../types';
 import { AI_MODELS } from '../config/constants';
-import { getGrandmasterSystemPrompt, getStructuredUserPrompt, parseAIResponse, getGamePhase } from './ai-prompts';
+import { getGamePhase } from './ai-prompts';
 
 /**
  * 生成AI棋手的系统提示词（角色预设版）
@@ -194,34 +194,50 @@ export async function getAIMove(
     try {
       console.log(`🤖 AI调用 (尝试 ${attempt + 1}/${maxRetries})`);
       
-      // ✅ 使用新的结构化提示词
+      // ✅ 极简提示词 - 直接要求JSON格式
       const phase = getGamePhase(gameState.moves.length);
-      const systemPrompt = getGrandmasterSystemPrompt(model.role || 'a chess Grandmaster');
-      const userPrompt = getStructuredUserPrompt(gameState, model.role || 'Grandmaster');
+      const colorName = currentPlayer.color === 'w' ? 'White' : 'Black';
       
-      console.log('📋 游戏阶段:', phase);
-      console.log('📋 AI角色:', model.role);
-      console.log('📤 提示词长度:', systemPrompt.length + userPrompt.length, '字符');
+      // 获取最近3步
+      let recentMoves = '';
+      if (gameState.moves.length > 0) {
+        const start = Math.max(0, gameState.moves.length - 3);
+        for (let i = start; i < gameState.moves.length; i++) {
+          recentMoves += gameState.moves[i].from + gameState.moves[i].to + ' ';
+        }
+      }
+      
+      const simplePrompt = `You are playing chess as ${colorName}.
+
+Current position: ${gameState.fen}
+Recent moves: ${recentMoves || 'game start'}
+
+Respond ONLY with JSON:
+{"from": "e2", "to": "e4", "reason": "control center"}
+
+Your move:`;
+
+      console.log('📋 阶段:', phase, '角色:', model.role);
+      console.log('📤 提示词长度:', simplePrompt.length, '字符');
+      console.log('📤 提示词内容:\n', simplePrompt);
       
       const messages = [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
+        { role: 'user', content: simplePrompt }
       ];
 
       console.log('📤 发送到Workers AI, 模型:', model.modelId);
-      console.log('📤 配置: temp=' + model.temperature + ', maxTokens=' + model.maxTokens);
       
-      // ✅ 使用模型配置的参数
+      // ✅ 使用最简配置
       let response;
       
       try {
         console.log('📤 调用env.AI.run...');
         response = await env.AI.run(model.modelId, {
           messages: messages,
-          temperature: model.temperature,
-          max_tokens: model.maxTokens
+          max_tokens: 100 // 极小token，只需要JSON
         });
         console.log('📥 Workers AI响应成功');
+        console.log('📥 完整响应:', JSON.stringify(response, null, 2));
       } catch (aiError: any) {
         console.error('❌ Workers AI调用异常:', aiError);
         console.error('错误消息:', aiError?.message);
@@ -248,87 +264,56 @@ export async function getAIMove(
       }
 
       console.log('AI原始响应长度:', aiResponse.length);
-      console.log('AI响应片段:', aiResponse.substring(0, 500));
-
-      // ✅ 使用新的结构化解析
-      const parsed = parseAIResponse(response);
-      console.log('📊 解析结果:', {
-        move: parsed.move,
-        reasoning: parsed.reasoning?.substring(0, 100),
-        confidence: parsed.confidence
-      });
+      console.log('AI响应内容:', aiResponse);
 
       let moveData = null;
+      let reasonText = '';
       
-      // ✅ 优先使用结构化解析（SAN格式）
-      if (parsed.move) {
-        console.log('📝 AI返回SAN格式:', parsed.move);
+      // ✅ 直接解析JSON格式
+      try {
+        moveData = JSON.parse(aiResponse.trim());
+        reasonText = moveData.reason || '';
+        console.log('✅ JSON解析成功:', moveData);
+      } catch (e) {
+        console.log('❌ 不是纯JSON，尝试提取...');
         
-        // 转换SAN到坐标（e4 → e2e4, Nf3 → g1f3）
-        const chess = new ChessEngine(gameState.fen);
-        const allMoves = chess.moves();
-        
-        // 尝试匹配SAN
-        const san = parsed.move.replace(/[+#]/g, ''); // 移除将军符号
-        
-        // 简单SAN匹配（兵移动：e4, d5等）
-        if (/^[a-h][1-8]$/.test(san)) {
-          // 这是兵移动，找到对应的from
-          const toFile = san[0];
-          const toRank = san[1];
-          const to = toFile + toRank;
-          
-          for (const move of allMoves) {
-            if (move.to === to) {
-              const piece = chess.get(move.from);
-              if (piece && piece.type === 'p') {
-                moveData = { from: move.from, to: move.to };
-                break;
-              }
-            }
+        // 尝试从文本中提取JSON
+        const jsonMatch = aiResponse.match(/\{[^}]*"from"[^}]*"to"[^}]*\}/);
+        if (jsonMatch) {
+          try {
+            moveData = JSON.parse(jsonMatch[0]);
+            reasonText = moveData.reason || '';
+            console.log('✅ 提取JSON成功:', moveData);
+          } catch (e2) {
+            console.log('❌ 提取JSON失败');
           }
-        } else {
-          // 棋子移动（Nf3, Bc4等），更复杂，暂时用JSON兜底
         }
-      }
-      
-      // 兜底：尝试JSON格式
-      if (!moveData) {
-        try {
-          moveData = JSON.parse(aiResponse.trim());
-        } catch (e) {
-          const jsonMatch = aiResponse.match(/\{[^}]*"from"[^}]*"to"[^}]*\}/);
-          if (jsonMatch) {
-            try {
-              moveData = JSON.parse(jsonMatch[0]);
-            } catch (e2) {
-              const fromMatch = aiResponse.match(/"from"[:\s]*"([a-h][1-8])"/i);
-              const toMatch = aiResponse.match(/"to"[:\s]*"([a-h][1-8])"/i);
-              const promMatch = aiResponse.match(/"promotion"[:\s]*"([qrbn])"/i);
-              
-              if (fromMatch && toMatch) {
-                moveData = {
-                  from: fromMatch[1].toLowerCase(),
-                  to: toMatch[1].toLowerCase()
-                };
-                if (promMatch) {
-                  moveData.promotion = promMatch[1].toLowerCase();
-                }
-              }
-            }
+        
+        // 正则提取
+        if (!moveData) {
+          const fromMatch = aiResponse.match(/"from"[:\s]*"([a-h][1-8])"/i);
+          const toMatch = aiResponse.match(/"to"[:\s]*"([a-h][1-8])"/i);
+          const reasonMatch = aiResponse.match(/"reason"[:\s]*"([^"]+)"/i);
+          
+          if (fromMatch && toMatch) {
+            moveData = {
+              from: fromMatch[1].toLowerCase(),
+              to: toMatch[1].toLowerCase()
+            };
+            reasonText = reasonMatch ? reasonMatch[1] : '';
+            console.log('✅ 正则提取成功:', moveData);
           }
         }
       }
 
       if (!moveData || !moveData.from || !moveData.to) {
         console.error('无法解析AI响应，尝试下一次');
+        console.error('AI返回内容:', aiResponse.substring(0, 200));
         continue;
       }
 
       console.log('✅ AI移动解析:', moveData);
-      console.log('💭 AI推理:', parsed.reasoning);
-      console.log('📊 AI评估:', parsed.evaluation);
-      console.log('🎯 AI信心:', parsed.confidence);
+      console.log('💭 AI推理:', reasonText);
 
       // 验证移动合法性
       const chess = new ChessEngine(gameState.fen);
@@ -341,9 +326,9 @@ export async function getAIMove(
         const phase = getGamePhase(gameState.moves.length);
         moveData.analysis = {
           phase: phase.toUpperCase(),
-          reasoning: parsed.reasoning || '移动完成',
-          evaluation: parsed.evaluation || '-',
-          confidence: parsed.confidence || '-'
+          reasoning: reasonText || '移动完成',
+          evaluation: 'AI决策',
+          confidence: 'High'
         };
         console.log('📊 附加AI分析:', moveData.analysis);
         
