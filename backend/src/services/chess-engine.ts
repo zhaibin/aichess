@@ -244,6 +244,26 @@ export class ChessEngine {
     this.board[toSquare.rank][toSquare.file] = piece;
     this.board[fromSquare.rank][fromSquare.file] = null;
 
+    // 处理王车易位
+    if (piece.type === 'k') {
+      const dx = toSquare.file - fromSquare.file;
+      if (Math.abs(dx) === 2) {
+        const rank = fromSquare.rank;
+        // 王侧易位
+        if (dx === 2) {
+          const rook = this.board[rank][7];
+          this.board[rank][5] = rook; // 车移到f列
+          this.board[rank][7] = null;
+        }
+        // 后侧易位
+        else if (dx === -2) {
+          const rook = this.board[rank][0];
+          this.board[rank][3] = rook; // 车移到d列
+          this.board[rank][0] = null;
+        }
+      }
+    }
+
     // 升变
     if (promotion && piece.type === 'p' && (toSquare.rank === 0 || toSquare.rank === 7)) {
       this.board[toSquare.rank][toSquare.file] = { type: promotion as PieceType, color: piece.color };
@@ -267,7 +287,7 @@ export class ChessEngine {
   }
 
   /**
-   * 检查移动是否合法
+   * 检查移动是否合法（完整版：禁止吃王+检查将军）
    */
   private isLegalMove(from: Square, to: Square): boolean {
     const piece = this.getPiece(from);
@@ -276,14 +296,53 @@ export class ChessEngine {
     if (!this.isValidSquare(to)) return false;
 
     const targetPiece = this.getPiece(to);
-    if (targetPiece && targetPiece.color === piece.color) return false;
+    if (targetPiece) {
+      // 不能吃自己的棋子
+      if (targetPiece.color === piece.color) return false;
+      // ❌ 禁止吃掉国王（关键修复！）
+      if (targetPiece.type === 'k') return false;
+    }
 
     // 基本移动规则检查
-    return this.canPieceMove(piece, from, to);
+    if (!this.canPieceMove(piece, from, to)) return false;
+
+    // ✅ 检查移动后是否让自己被将军
+    return this.wouldNotCauseCheck(from, to);
   }
 
   /**
-   * 检查棋子是否可以移动到目标位置
+   * 检查移动后是否会让自己被将军
+   */
+  private wouldNotCauseCheck(from: Square, to: Square): boolean {
+    // 临时执行移动
+    const piece = this.getPiece(from);
+    const captured = this.getPiece(to);
+    
+    this.board[to.rank][to.file] = piece;
+    this.board[from.rank][from.file] = null;
+
+    // 检查自己的王是否被将军
+    const kingSquare = this.findKing(this.currentTurn);
+    let safe = true;
+    
+    if (!kingSquare) {
+      // 国王不存在（不应该发生）
+      safe = false;
+    } else {
+      // 检查王的位置是否被对方攻击
+      const opponentColor = this.currentTurn === 'w' ? 'b' : 'w';
+      safe = !this.isSquareAttacked(kingSquare, opponentColor);
+    }
+
+    // 撤销移动
+    this.board[from.rank][from.file] = piece;
+    this.board[to.rank][to.file] = captured;
+
+    return safe;
+  }
+
+  /**
+   * 检查棋子是否可以移动到目标位置（基础移动规则）
    */
   private canPieceMove(piece: Piece, from: Square, to: Square): boolean {
     const dx = to.file - from.file;
@@ -301,10 +360,62 @@ export class ChessEngine {
       case 'q': // 后
         return (dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy)) && this.isPathClear(from, to);
       case 'k': // 王
-        return Math.abs(dx) <= 1 && Math.abs(dy) <= 1;
+        // 普通移动（一步）
+        if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) {
+          return true;
+        }
+        // 王车易位
+        return this.canCastle(piece.color, from, to, dx);
       default:
         return false;
     }
+  }
+
+  /**
+   * 检查王车易位是否合法
+   */
+  private canCastle(color: PieceColor, from: Square, to: Square, dx: number): boolean {
+    // 必须是横向移动两格
+    if (Math.abs(dx) !== 2 || to.rank !== from.rank) return false;
+
+    const rank = color === 'w' ? 0 : 7;
+    if (from.rank !== rank || to.rank !== rank) return false;
+
+    // 检查王和车是否移动过（简化版：检查王的位置）
+    const kingFile = 4; // e列
+    if (from.file !== kingFile) return false;
+
+    // 王侧易位（短易位）
+    if (dx === 2) {
+      // 检查f和g列是否为空
+      if (this.board[rank][5] !== null || this.board[rank][6] !== null) return false;
+      // 检查h列是否有车
+      const rook = this.board[rank][7];
+      if (!rook || rook.type !== 'r' || rook.color !== color) return false;
+      // 检查王经过的格子是否被攻击
+      const opponent = color === 'w' ? 'b' : 'w';
+      if (this.isSquareAttacked({ file: 4, rank }, opponent)) return false;
+      if (this.isSquareAttacked({ file: 5, rank }, opponent)) return false;
+      if (this.isSquareAttacked({ file: 6, rank }, opponent)) return false;
+      return true;
+    }
+
+    // 后侧易位（长易位）
+    if (dx === -2) {
+      // 检查b、c、d列是否为空
+      if (this.board[rank][1] !== null || this.board[rank][2] !== null || this.board[rank][3] !== null) return false;
+      // 检查a列是否有车
+      const rook = this.board[rank][0];
+      if (!rook || rook.type !== 'r' || rook.color !== color) return false;
+      // 检查王经过的格子是否被攻击
+      const opponent = color === 'w' ? 'b' : 'w';
+      if (this.isSquareAttacked({ file: 4, rank }, opponent)) return false;
+      if (this.isSquareAttacked({ file: 3, rank }, opponent)) return false;
+      if (this.isSquareAttacked({ file: 2, rank }, opponent)) return false;
+      return true;
+    }
+
+    return false;
   }
 
   /**
