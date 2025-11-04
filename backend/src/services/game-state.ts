@@ -65,9 +65,10 @@ export class GameState extends DurableObject {
    */
   private async handleCreate(request: Request): Promise<Response> {
     const data: CreateGameRequest = await request.json();
-    console.log('📝 创建游戏请求:', data);
+    console.log('🎮 DO handleCreate被调用, mode:', data.mode);
 
     const gameId = crypto.randomUUID();
+    console.log('📥 生成游戏ID:', gameId);
     const now = Date.now();
 
     const whitePlayer: Player = {
@@ -100,8 +101,18 @@ export class GameState extends DurableObject {
       lastMoveAt: now
     };
 
+    console.log('💾 保存到storage, key="game"');
     await this.state.storage.put('game', this.game);
+    
+    // 验证保存
+    const saved = await this.state.storage.get('game');
+    console.log('✅ Storage验证:', saved ? 'OK (id: ' + saved.id + ')' : '❌ FAILED');
+    
+    // 列出所有keys
+    const allKeys = await this.state.storage.list();
+    console.log('📋 Storage所有keys:', Array.from(allKeys.keys()));
 
+    console.log('✅ 游戏创建完成，返回响应');
     return new Response(JSON.stringify(this.game), {
       headers: { 'Content-Type': 'application/json' }
     });
