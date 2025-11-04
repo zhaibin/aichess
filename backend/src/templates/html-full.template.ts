@@ -697,13 +697,15 @@ export function getFullHTMLTemplate(lang: Language): string {
     
     function handleSquareClick(square) {
       const squareName = square.dataset.square;
+      console.log('点击方格:', squareName, 'gameState:', gameState ? gameState.status : 'null');
       
-      // 如果还没有开始游戏，允许自由移动（练习模式）
-      if (!gameState || gameState.status !== 'active') {
+      // 练习模式（无游戏状态）
+      if (!gameState) {
+        console.log('练习模式');
         if (selectedSquare) {
-          // 尝试移动
           const result = chess.move({ from: selectedSquare, to: squareName });
           if (result) {
+            console.log('练习移动成功');
             renderBoard();
           }
           selectedSquare = null;
@@ -718,56 +720,67 @@ export function getFullHTMLTemplate(lang: Language): string {
         return;
       }
       
-      // 游戏进行中
-      console.log('游戏状态:', gameState.status, '当前回合:', gameState.currentTurn, '游戏模式:', gameState.mode);
+      console.log('游戏模式:', gameState.mode, '状态:', gameState.status, '当前回合:', gameState.currentTurn);
       
-      // 人人对战模式：本地处理，不调用API
+      // 人人对战：本地处理
       if (gameState.mode === 'human-vs-human') {
+        console.log('人人对战模式');
         if (selectedSquare) {
           const result = chess.move({ from: selectedSquare, to: squareName });
           if (result) {
             console.log('本地移动成功:', result);
             renderBoard();
-            // 更新本地gameState（可选）
             gameState.currentTurn = chess.turn;
           }
           selectedSquare = null;
           clearHighlights();
         } else {
           const piece = chess.get(squareName);
+          console.log('选择棋子:', piece);
           if (piece && piece.color === chess.turn) {
             selectedSquare = squareName;
             highlightSquare(square);
+            console.log('棋子已选中');
           }
         }
         return;
       }
       
-      // 人机对战或AI对战：需要API
-      const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
-      console.log('当前玩家:', currentPlayer);
-      
-      // 如果当前是AI的回合，禁止人类移动
-      if (currentPlayer.type === 'ai') {
-        console.log('AI的回合，请等待...');
+      // AI vs AI：只能观看
+      if (gameState.mode === 'ai-vs-ai') {
+        console.log('AI vs AI模式，只能观战');
         return;
       }
       
-      if (selectedSquare) {
-        makeMove(selectedSquare, squareName);
-        selectedSquare = null;
-        clearHighlights();
-      } else {
-        const piece = chess.get(squareName);
-        console.log('点击的棋子:', piece, '当前回合:', chess.turn, 'gameState回合:', gameState.currentTurn);
+      // 人机对战：只允许人类移动
+      if (gameState.mode === 'human-vs-ai') {
+        console.log('人机对战模式');
+        const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
+        console.log('当前玩家:', currentPlayer.type, '颜色:', currentPlayer.color);
         
-        // 只能选择当前回合的棋子
-        if (piece && piece.color === gameState.currentTurn) {
-          console.log('选中棋子:', squareName);
-          selectedSquare = squareName;
-          highlightSquare(square);
-        } else if (piece) {
-          console.log('不是你的回合，当前回合是:', gameState.currentTurn === 'w' ? '白方' : '黑方');
+        // AI回合，禁止操作
+        if (currentPlayer.type === 'ai') {
+          console.log('AI的回合，请等待...');
+          return;
+        }
+        
+        // 人类回合
+        if (selectedSquare) {
+          console.log('尝试移动:', selectedSquare, '->', squareName);
+          makeMove(selectedSquare, squareName);
+          selectedSquare = null;
+          clearHighlights();
+        } else {
+          const piece = chess.get(squareName);
+          console.log('点击棋子:', piece, '需要颜色:', gameState.currentTurn);
+          
+          if (piece && piece.color === gameState.currentTurn) {
+            selectedSquare = squareName;
+            highlightSquare(square);
+            console.log('✅ 棋子已选中:', squareName);
+          } else if (piece) {
+            console.log('❌ 不是你的棋子');
+          }
         }
       }
     }
@@ -852,6 +865,7 @@ export function getFullHTMLTemplate(lang: Language): string {
       if (!gameState || !gameState.id) return;
       
       try {
+        console.log('轮询游戏状态...');
         const response = await fetch('/api/game-state?gameId=' + gameState.id);
         if (!response.ok) {
           console.error('Poll failed with status:', response.status);
@@ -859,12 +873,23 @@ export function getFullHTMLTemplate(lang: Language): string {
         }
         
         const newState = await response.json();
+        console.log('获取到新状态:', newState.currentTurn, 'FEN变化:', newState.fen !== gameState.fen);
         
         if (newState && newState.fen && newState.fen !== gameState.fen) {
+          console.log('棋盘更新!');
           gameState = newState;
           chess = new Chess(gameState.fen);
           renderBoard();
           updateGameInfo();
+        }
+        
+        // AI vs AI模式：检查是否游戏结束
+        if (gameState.mode === 'ai-vs-ai' && gameState.status !== 'active') {
+          console.log('AI vs AI游戏结束');
+          if (updateInterval) {
+            clearInterval(updateInterval);
+            updateInterval = null;
+          }
         }
       } catch (error) {
         console.error('Poll failed:', error);
