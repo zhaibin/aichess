@@ -4,211 +4,201 @@ import { GameState } from '../types';
 import { AI_MODELS } from '../config/constants';
 
 /**
- * 生成AI棋手的系统提示词
+ * 生成AI棋手的系统提示词（优化版：更清晰）
  */
 export function getSystemPrompt(): string {
-  return `You are a professional chess player participating in an international chess tournament.
+  return `You are a professional chess grandmaster AI.
 
-RULES:
-1. You must follow FIDE (International Chess Federation) rules strictly
-2. Time control: Each player has limited time (5, 10, or 15 minutes total)
-3. Invalid moves will cost you time and you must reconsider
-4. You can offer a draw, but both players must agree
+RESPONSE FORMAT (STRICT):
+Return ONLY a JSON object with your move in UCI format:
+{"from": "e2", "to": "e4"}
 
-INPUT FORMAT:
-- Current board position (FEN notation)
-- Move history in Standard Algebraic Notation (SAN)
-- Your color (white/black)
-- Your remaining time
-- Opponent's remaining time
-- Last move made
+For pawn promotion, add the piece:
+{"from": "e7", "to": "e8", "promotion": "q"}
 
-OUTPUT FORMAT:
-You must respond with ONLY a JSON object in this exact format:
-{
-  "move": "e2e4" // UCI format: from-square + to-square + promotion(if any)
-}
+MOVE EXAMPLES:
+- Opening: {"from": "e2", "to": "e4"}
+- Capture: {"from": "d4", "to": "e5"}
+- Castle kingside: {"from": "e1", "to": "g1"}
+- Promotion: {"from": "a7", "to": "a8", "promotion": "q"}
 
-OR to offer a draw:
-{
-  "draw": true
-}
+PROMOTION OPTIONS:
+- "q" = Queen (best)
+- "r" = Rook
+- "b" = Bishop  
+- "n" = Knight
 
-MOVE FORMAT EXAMPLES:
-- Normal move: "e2e4" (pawn from e2 to e4)
-- Capture: "e5d6" (piece from e5 captures on d6)
-- Castling: "e1g1" (king-side castling for white)
-- Promotion: "e7e8q" (pawn promotes to queen)
-
-IMPORTANT:
-- Only output valid JSON, no explanation
-- Moves must be in UCI format (e.g., "e2e4", not "e4")
-- Invalid moves waste your time
-- Think strategically about time management
-- Consider opening theory, tactics, and endgames`;
+CRITICAL:
+- Return ONLY JSON
+- NO explanations
+- Move MUST be legal
+- Use lowercase (a-h, 1-8)`;
 }
 
 /**
- * 生成AI棋手的用户提示词
+ * 生成用户提示词（优化：PGN格式）
  */
-export function getUserPrompt(gameState: GameState, aiColor: 'w' | 'b'): string {
-  const opponentColor = aiColor === 'w' ? 'b' : 'w';
-  const aiPlayer = aiColor === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
-  const opponentPlayer = aiColor === 'w' ? gameState.blackPlayer : gameState.whitePlayer;
+export function getUserPrompt(gameState: GameState): string {
+  const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
+  const opponent = gameState.currentTurn === 'w' ? gameState.blackPlayer : gameState.whitePlayer;
+  
+  // 构建标准PGN格式的移动历史
+  let pgnHistory = '';
+  if (gameState.moves.length > 0) {
+    for (let i = 0; i < gameState.moves.length; i += 2) {
+      const moveNum = Math.floor(i / 2) + 1;
+      const whiteMove = gameState.moves[i];
+      const blackMove = gameState.moves[i + 1];
+      
+      pgnHistory += moveNum + '.';
+      pgnHistory += whiteMove.san;
+      if (blackMove) {
+        pgnHistory += ' ' + blackMove.san;
+      }
+      pgnHistory += ' ';
+    }
+  } else {
+    pgnHistory = '(starting position)';
+  }
 
-  const moveHistory = gameState.moves.map(m => m.san).join(' ');
-  const lastMove = gameState.moves.length > 0 ? gameState.moves[gameState.moves.length - 1].san : 'none';
+  const colorName = currentPlayer.color === 'w' ? 'White' : 'Black';
+  const mins = Math.floor(currentPlayer.timeRemaining / 60);
+  const secs = currentPlayer.timeRemaining % 60;
 
-  return `GAME STATE:
-FEN: ${gameState.fen}
-Your Color: ${aiColor === 'w' ? 'white' : 'black'}
-Move History: ${moveHistory || 'Game just started'}
-Last Move: ${lastMove}
-Your Time Remaining: ${formatTime(aiPlayer.timeRemaining)}
-Opponent Time Remaining: ${formatTime(opponentPlayer.timeRemaining)}
-Move Number: ${gameState.moves.length + 1}
+  return `POSITION (FEN):
+${gameState.fen}
 
-Make your move now. Respond with JSON only.`;
+YOU PLAY: ${colorName}
+MOVE HISTORY (PGN):
+${pgnHistory.trim()}
+
+YOUR TIME: ${mins}:${secs.toString().padStart(2, '0')}
+OPPONENT TIME: ${Math.floor(opponent.timeRemaining / 60)}:${(opponent.timeRemaining % 60).toString().padStart(2, '0')}
+
+Make your move (JSON format only):`;
 }
 
 /**
- * 调用AI模型获取移动
+ * 获取AI移动
  */
 export async function getAIMove(
-  ai: any,
   gameState: GameState,
-  aiColor: 'w' | 'b',
-  modelId: string
-): Promise<{ from: string; to: string; promotion?: string } | { draw: boolean } | null> {
-  const maxRetries = 3;
-  let retryCount = 0;
-  const retryDelay = 1000; // 1秒重试延迟
+  aiModel: string,
+  env: any
+): Promise<{ from: string; to: string; promotion?: string } | null> {
+  const model = AI_MODELS[aiModel];
+  if (!model) {
+    console.error('Invalid AI model:', aiModel);
+    return null;
+  }
 
-  while (retryCount < maxRetries) {
+  const maxRetries = 3;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      // 指数退避重试
-      if (retryCount > 0) {
-        await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(2, retryCount - 1)));
-      }
+      console.log(`🤖 AI调用 (尝试 ${attempt + 1}/${maxRetries}):`, model.name);
+      
       const messages = [
         { role: 'system', content: getSystemPrompt() },
-        { role: 'user', content: getUserPrompt(gameState, aiColor) }
+        { role: 'user', content: getUserPrompt(gameState) }
       ];
 
-      // 添加超时控制
-      const timeout = 30000; // 30秒超时
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      const response = await env.AI.run(model.modelId, {
+        messages,
+        temperature: 0.7,
+        max_tokens: 100
+      });
 
-      try {
-        const response = await ai.run(modelId, {
-          messages,
-          temperature: 0.7,
-          max_tokens: 150
-        });
-        
-        clearTimeout(timeoutId);
-
-      // 提取响应文本
-      let responseText = '';
+      // 提取响应
+      let aiResponse = '';
       if (response.response) {
-        responseText = response.response;
-      } else if (response.result && response.result.response) {
-        responseText = response.result.response;
+        aiResponse = response.response;
+      } else if (response.result?.response) {
+        aiResponse = response.result.response;
       } else if (typeof response === 'string') {
-        responseText = response;
+        aiResponse = response;
       }
 
-      console.log(`AI Response (${modelId}):`, responseText);
+      console.log('AI原始响应:', aiResponse);
 
-      // 尝试解析JSON
-      const jsonMatch = responseText.match(/\{[^}]+\}/);
-      if (!jsonMatch) {
-        console.error('No JSON found in response');
-        retryCount++;
+      // 多种方式解析JSON
+      let moveData = null;
+      
+      // 方式1: 直接解析
+      try {
+        moveData = JSON.parse(aiResponse.trim());
+      } catch (e) {
+        // 方式2: 提取JSON对象
+        const jsonMatch = aiResponse.match(/\{[^}]*"from"[^}]*"to"[^}]*\}/);
+        if (jsonMatch) {
+          try {
+            moveData = JSON.parse(jsonMatch[0]);
+          } catch (e2) {
+            // 方式3: 正则提取
+            const fromMatch = aiResponse.match(/"from"[:\s]*"([a-h][1-8])"/i);
+            const toMatch = aiResponse.match(/"to"[:\s]*"([a-h][1-8])"/i);
+            const promMatch = aiResponse.match(/"promotion"[:\s]*"([qrbn])"/i);
+            
+            if (fromMatch && toMatch) {
+              moveData = {
+                from: fromMatch[1].toLowerCase(),
+                to: toMatch[1].toLowerCase()
+              };
+              if (promMatch) {
+                moveData.promotion = promMatch[1].toLowerCase();
+              }
+            }
+          }
+        }
+      }
+
+      if (!moveData || !moveData.from || !moveData.to) {
+        console.error('无法解析AI响应');
         continue;
       }
 
-      const result = JSON.parse(jsonMatch[0]);
+      console.log('✅ AI移动解析:', moveData);
 
-      // 检查是否提和
-      if (result.draw === true) {
-        return { draw: true };
-      }
+      // 验证移动合法性
+      const chess = new ChessEngine(gameState.fen);
+      const result = chess.makeMove(moveData.from, moveData.to, moveData.promotion);
 
-      // 验证移动格式
-      if (result.move && typeof result.move === 'string' && result.move.length >= 4) {
-        const move = result.move.toLowerCase();
-        const from = move.substring(0, 2);
-        const to = move.substring(2, 4);
-        const promotion = move.length > 4 ? move.substring(4, 5) : undefined;
-
-        // 验证移动是否合法
-        const chess = new ChessEngine(gameState.fen);
-        const moveResult = chess.makeMove(from, to, promotion);
-
-        if (moveResult.success) {
-          return { from, to, promotion };
-        } else {
-          console.error(`Invalid move: ${move}`);
-          retryCount++;
-        }
+      if (result.success) {
+        console.log('✅ AI移动合法');
+        return moveData;
       } else {
-        console.error('Invalid move format in response');
-        retryCount++;
+        console.warn('❌ AI移动不合法:', moveData);
       }
-      } catch (timeoutError) {
-        clearTimeout(timeoutId);
-        console.error('AI request timeout:', timeoutError);
-        retryCount++;
-      }
+
     } catch (error) {
-      console.error(`AI move error (attempt ${retryCount + 1}/${maxRetries}):`, error);
-      retryCount++;
-      
-      // 对于某些错误类型，不重试
-      if (error instanceof Error && error.message.includes('rate limit')) {
-        console.log('Rate limit hit, using fallback');
-        break;
-      }
+      console.error(`AI调用失败 (尝试 ${attempt + 1}):`, error);
     }
   }
 
   // 所有重试失败，返回随机合法移动
-  console.log('AI failed to provide valid move, selecting random legal move');
-  return getRandomLegalMove(gameState.fen);
+  console.log('⚠️ AI失败，使用随机移动');
+  return getRandomLegalMove(gameState);
 }
 
 /**
- * 获取随机合法移动（备用方案）
+ * 获取随机合法移动
  */
-function getRandomLegalMove(fen: string): { from: string; to: string; promotion?: string } | null {
+function getRandomLegalMove(gameState: GameState): { from: string; to: string } | null {
   try {
-    const chess = new ChessEngine(fen);
-    const legalMoves = chess.getLegalMoves();
+    const chess = new ChessEngine(gameState.fen);
+    const allMoves = chess.moves();
 
-    if (legalMoves.length === 0) {
+    if (allMoves.length === 0) {
       return null;
     }
 
-    const randomMove = legalMoves[Math.floor(Math.random() * legalMoves.length)];
+    const randomMove = allMoves[Math.floor(Math.random() * allMoves.length)];
     return {
-      from: randomMove.substring(0, 2),
-      to: randomMove.substring(2, 4),
-      promotion: randomMove.length > 4 ? randomMove.substring(4) : undefined
+      from: randomMove.from,
+      to: randomMove.to
     };
   } catch (error) {
-    console.error('Error getting random legal move:', error);
+    console.error('随机移动生成失败:', error);
     return null;
   }
 }
-
-/**
- * 格式化时间显示
- */
-function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
