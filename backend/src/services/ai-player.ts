@@ -236,33 +236,73 @@ export async function getAIMove(
         aiResponse = response;
       }
 
-      console.log('AI原始响应:', aiResponse);
+      console.log('AI原始响应长度:', aiResponse.length);
+      console.log('AI响应片段:', aiResponse.substring(0, 500));
 
-      // 多种方式解析JSON
+      // ✅ 使用新的结构化解析
+      const parsed = parseAIResponse(response);
+      console.log('📊 解析结果:', {
+        move: parsed.move,
+        reasoning: parsed.reasoning?.substring(0, 100),
+        confidence: parsed.confidence
+      });
+
       let moveData = null;
       
-      // 方式1: 直接解析
-      try {
-        moveData = JSON.parse(aiResponse.trim());
-      } catch (e) {
-        // 方式2: 提取JSON对象
-        const jsonMatch = aiResponse.match(/\{[^}]*"from"[^}]*"to"[^}]*\}/);
-        if (jsonMatch) {
-          try {
-            moveData = JSON.parse(jsonMatch[0]);
-          } catch (e2) {
-            // 方式3: 正则提取
-            const fromMatch = aiResponse.match(/"from"[:\s]*"([a-h][1-8])"/i);
-            const toMatch = aiResponse.match(/"to"[:\s]*"([a-h][1-8])"/i);
-            const promMatch = aiResponse.match(/"promotion"[:\s]*"([qrbn])"/i);
-            
-            if (fromMatch && toMatch) {
-              moveData = {
-                from: fromMatch[1].toLowerCase(),
-                to: toMatch[1].toLowerCase()
-              };
-              if (promMatch) {
-                moveData.promotion = promMatch[1].toLowerCase();
+      // ✅ 优先使用结构化解析（SAN格式）
+      if (parsed.move) {
+        console.log('📝 AI返回SAN格式:', parsed.move);
+        
+        // 转换SAN到坐标（e4 → e2e4, Nf3 → g1f3）
+        const chess = new ChessEngine(gameState.fen);
+        const allMoves = chess.moves();
+        
+        // 尝试匹配SAN
+        const san = parsed.move.replace(/[+#]/g, ''); // 移除将军符号
+        
+        // 简单SAN匹配（兵移动：e4, d5等）
+        if (/^[a-h][1-8]$/.test(san)) {
+          // 这是兵移动，找到对应的from
+          const toFile = san[0];
+          const toRank = san[1];
+          const to = toFile + toRank;
+          
+          for (const move of allMoves) {
+            if (move.to === to) {
+              const piece = chess.get(move.from);
+              if (piece && piece.type === 'p') {
+                moveData = { from: move.from, to: move.to };
+                break;
+              }
+            }
+          }
+        } else {
+          // 棋子移动（Nf3, Bc4等），更复杂，暂时用JSON兜底
+        }
+      }
+      
+      // 兜底：尝试JSON格式
+      if (!moveData) {
+        try {
+          moveData = JSON.parse(aiResponse.trim());
+        } catch (e) {
+          const jsonMatch = aiResponse.match(/\{[^}]*"from"[^}]*"to"[^}]*\}/);
+          if (jsonMatch) {
+            try {
+              moveData = JSON.parse(jsonMatch[0]);
+            } catch (e2) {
+              const fromMatch = aiResponse.match(/"from"[:\s]*"([a-h][1-8])"/i);
+              const toMatch = aiResponse.match(/"to"[:\s]*"([a-h][1-8])"/i);
+              const promMatch = aiResponse.match(/"promotion"[:\s]*"([qrbn])"/i);
+              
+              if (fromMatch && toMatch) {
+                moveData = {
+                  from: fromMatch[1].toLowerCase(),
+                  to: toMatch[1].toLowerCase()
+                };
+                if (promMatch) {
+                  moveData.promotion = promMatch[1].toLowerCase();
+                }
               }
             }
           }
@@ -270,11 +310,14 @@ export async function getAIMove(
       }
 
       if (!moveData || !moveData.from || !moveData.to) {
-        console.error('无法解析AI响应');
+        console.error('无法解析AI响应，尝试下一次');
         continue;
       }
 
       console.log('✅ AI移动解析:', moveData);
+      console.log('💭 AI推理:', parsed.reasoning);
+      console.log('📊 AI评估:', parsed.evaluation);
+      console.log('🎯 AI信心:', parsed.confidence);
 
       // 验证移动合法性
       const chess = new ChessEngine(gameState.fen);
