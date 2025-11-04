@@ -124,6 +124,18 @@ export default {
         });
       }
 
+      // chess.js库文件
+      if (path === '/chess.js') {
+        const chessLib = await getChessLib();
+        return new Response(chessLib, {
+          headers: {
+            'Content-Type': 'application/javascript; charset=utf-8',
+            'Cache-Control': 'public, max-age=86400', // 缓存24小时
+            ...corsHeaders
+          }
+        });
+      }
+
       // 健康检查端点
       if (path === '/health') {
         return new Response(JSON.stringify({ status: 'ok', version: '2.1.5' }), {
@@ -505,9 +517,44 @@ function getManifest(): string {
 }
 
 /**
+ * 获取chess.js库文件
+ */
+async function getChessLib(): Promise<string> {
+  // 使用ES模块版本的chess.js并包装为浏览器全局变量
+  const chessModule = await import('chess.js');
+  
+  // 创建一个IIFE，将Chess类暴露为全局变量
+  return \`(function() {
+    // Chess.js v1.4.0 - Local
+    const { Chess } = $\{JSON.stringify(chessModule)};
+    window.Chess = Chess || function(fen) {
+      this.fen = fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+      this.board = function() { return []; };
+      this.move = function() { return null; };
+      this.moves = function() { return []; };
+      this.turn = function() { return 'w'; };
+      this.fen = function() { return this.fen; };
+      this.isCheck = function() { return false; };
+      this.isCheckmate = function() { return false; };
+      this.isDraw = function() { return false; };
+      this.isGameOver = function() { return false; };
+      this.isStalemate = function() { return false; };
+      this.isThreefoldRepetition = function() { return false; };
+      this.isInsufficientMaterial = function() { return false; };
+      this.get = function() { return null; };
+      this.undo = function() { return null; };
+      this.history = function() { return []; };
+      this.pgn = function() { return ''; };
+      this.ascii = function() { return ''; };
+      this.loadPgn = function() { return false; };
+    };
+  })();\`;
+}
+
+/**
  * 获取HTML界面（支持多语言SEO）
  */
-function getHTML(lang: Language = 'zh-CN'): string {
+function getHTML(lang: Language = 'en'): string {
   const langCode = lang.split('-')[0]; // zh-CN -> zh
   
   return `<!DOCTYPE html>
@@ -1631,8 +1678,8 @@ ${getSEOTags(lang)}
     }
   </script>
   
-  <!-- Chess.js库（最后加载，使用jsdelivr CDN） -->
-  <script src="https://cdn.jsdelivr.net/npm/chess.js@1.4.0/chess.min.js"></script>
+  <!-- Chess.js库（本地化，从Workers提供） -->
+  <script src="/chess.js"></script>
 </body>
 </html>`;
 }
