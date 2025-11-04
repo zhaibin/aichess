@@ -49,9 +49,12 @@ export function getUserPrompt(gameState: GameState): string {
   const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
   const opponent = gameState.currentTurn === 'w' ? gameState.blackPlayer : gameState.whitePlayer;
   
-  // 构建标准PGN格式的移动历史
+  // 构建标准PGN格式的移动历史（详细版，包含每步）
   let pgnHistory = '';
+  let moveDetails = '';
+  
   if (gameState.moves.length > 0) {
+    // PGN格式
     for (let i = 0; i < gameState.moves.length; i += 2) {
       const moveNum = Math.floor(i / 2) + 1;
       const whiteMove = gameState.moves[i];
@@ -64,8 +67,19 @@ export function getUserPrompt(gameState: GameState): string {
       }
       pgnHistory += ' ';
     }
+    
+    // 详细每步（用于AI理解）
+    moveDetails = '\n\nDETAILED MOVES:\n';
+    for (let i = 0; i < gameState.moves.length; i++) {
+      const move = gameState.moves[i];
+      const player = i % 2 === 0 ? 'White' : 'Black';
+      moveDetails += `${i + 1}. ${player}: ${move.from}→${move.to}`;
+      if (move.promotion) moveDetails += ` (promoted to ${move.promotion})`;
+      moveDetails += '\n';
+    }
   } else {
-    pgnHistory = '(starting position)';
+    pgnHistory = '(starting position - no moves yet)';
+    moveDetails = '';
   }
 
   const colorName = currentPlayer.color === 'w' ? 'White' : 'Black';
@@ -82,26 +96,37 @@ export function getUserPrompt(gameState: GameState): string {
     timePressure = '\n⏰ Time is running low - be efficient!';
   }
 
-  return `CURRENT POSITION (FEN):
+  return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHESS GAME - MOVE ${gameState.moves.length + 1}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CURRENT POSITION (FEN):
 ${gameState.fen}
 
-YOU ARE: ${colorName} (${currentPlayer.color === 'w' ? 'bottom ranks 1-2' : 'top ranks 7-8'})
+YOU ARE: ${colorName} (${currentPlayer.color === 'w' ? 'White plays from bottom (ranks 1-2)' : 'Black plays from top (ranks 7-8)'})
 
-GAME HISTORY (PGN):
-${pgnHistory.trim()}
-Total moves: ${gameState.moves.length}
+COMPLETE GAME HISTORY (PGN):
+${pgnHistory.trim()}${moveDetails}
 
-TIME REMAINING:
-YOUR TIME: ${yourMins}:${yourSecs.toString().padStart(2, '0')} ⏱️${timePressure}
-OPPONENT TIME: ${oppMins}:${oppSecs.toString().padStart(2, '0')}
+BOARD ANALYSIS:
+- Total moves so far: ${gameState.moves.length}
+- ${gameState.moves.length < 10 ? 'OPENING PHASE' : gameState.moves.length < 30 ? 'MIDDLEGAME' : 'ENDGAME'}
+- Last move: ${gameState.moves.length > 0 ? gameState.moves[gameState.moves.length - 1].san : 'none'}
 
-ANALYZE THE POSITION:
-- What are your tactical opportunities?
-- Can you checkmate or win material?
-- Is your king safe?
-- What is your opponent threatening?
+TIME CONTROL:
+━━━━━━━━━━━━━━━━━━━━━━━━
+YOUR TIME:      ${yourMins}:${yourSecs.toString().padStart(2, '0')} ⏱️${timePressure}
+OPPONENT TIME:  ${oppMins}:${oppSecs.toString().padStart(2, '0')}
+━━━━━━━━━━━━━━━━━━━━━━━━
 
-YOUR MOVE (JSON only):`;
+YOUR TASK:
+1. Analyze the position carefully
+2. Consider ALL tactical and strategic factors
+3. Find the BEST move (not random!)
+4. Aim for CHECKMATE or material advantage
+5. Manage your time wisely
+
+RESPOND WITH YOUR MOVE (JSON format ONLY):`;
 }
 
 /**
@@ -140,9 +165,19 @@ export async function getAIMove(
     try {
       console.log(`🤖 AI调用 (尝试 ${attempt + 1}/${maxRetries})`);
       
+      const systemPrompt = getSystemPrompt();
+      const userPrompt = getUserPrompt(gameState);
+      
+      // 🔍 日志：显示完整提示词
+      console.log('📤 系统提示词长度:', systemPrompt.length, '字符');
+      console.log('📤 用户提示词:');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log(userPrompt);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
       const messages = [
-        { role: 'system', content: getSystemPrompt() },
-        { role: 'user', content: getUserPrompt(gameState) }
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
       ];
 
       console.log('📤 发送到Workers AI, 模型:', model.modelId);
@@ -154,8 +189,6 @@ export async function getAIMove(
       if (model.type === 'instructions') {
         // GPT-OSS使用instructions+input格式
         console.log('📤 使用instructions格式');
-        const systemPrompt = getSystemPrompt();
-        const userPrompt = getUserPrompt(gameState);
         
         response = await env.AI.run(model.modelId, {
           instructions: systemPrompt,
