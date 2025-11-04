@@ -1,0 +1,18 @@
+{
+  "name": "aichess-frontend",
+  "version": "4.0.0",
+  "description": "AIChess Frontend",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.0"
+  },
+  "dependencies": {}
+}
+
