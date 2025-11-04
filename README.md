@@ -77,9 +77,13 @@
 - **后端**: Cloudflare Workers
 - **存储**: Durable Objects
 - **队列**: Cloudflare Queues
-- **AI**: Cloudflare Workers AI
+- **AI**: Cloudflare Workers AI (5个模型)
 - **前端**: 原生HTML/CSS/JavaScript
 - **棋规**: chess.js
+- **安全**: CSP、XSS保护、输入验证
+- **性能**: HTTP缓存、Gzip压缩、CDN优化
+- **SEO**: 结构化数据、sitemap、meta标签
+- **PWA**: manifest.json、离线支持
 
 ## 快速开始
 
