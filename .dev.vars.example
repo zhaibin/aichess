@@ -1,0 +1,6 @@
+# 本地开发环境变量示例
+# 复制此文件为 .dev.vars 用于本地开发
+
+# 可选：如果需要特殊配置
+# ENVIRONMENT=development
+
