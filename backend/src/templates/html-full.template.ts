@@ -57,42 +57,36 @@ export function getFullHTMLTemplate(lang: Language): string {
     
     .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
     
-    /* 固定按钮 */
-    .new-game-btn {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      z-index: 1000;
-      background: #4caf50;
+    /* 棋盘区域顶部控制栏 */
+    .board-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      gap: 10px;
+    }
+    
+    .board-controls .new-game-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      padding: 12px 24px;
+      padding: 10px 20px;
       border: none;
       border-radius: 8px;
-      font-size: 1em;
+      font-size: 0.95em;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      transition: all 0.3s;
       font-weight: 600;
+      transition: transform 0.2s;
     }
     
-    .new-game-btn:hover {
-      background: #45a049;
-      transform: translateY(-2px);
+    .board-controls .new-game-btn:hover {
+      transform: scale(1.05);
     }
     
-    /* 语言选择器 */
-    .language-selector {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 1000;
-    }
-    
-    .language-selector select {
-      padding: 10px 15px;
-      border: 2px solid #ddd;
+    .board-controls .language-selector select {
+      padding: 8px 12px;
+      border: 2px solid #667eea;
       border-radius: 8px;
-      font-size: 1em;
+      font-size: 0.95em;
       background: white;
       cursor: pointer;
     }
@@ -225,6 +219,8 @@ export function getFullHTMLTemplate(lang: Language): string {
     }
     
     .square {
+      width: 100%;
+      height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -232,6 +228,7 @@ export function getFullHTMLTemplate(lang: Language): string {
       cursor: pointer;
       transition: all 0.2s;
       user-select: none;
+      box-sizing: border-box;
     }
     
     .square.light { background-color: #f0d9b5; }
@@ -258,21 +255,37 @@ export function getFullHTMLTemplate(lang: Language): string {
       
       .board-container {
         width: 100%;
-        max-width: 100vw;
-        padding: 10px;
+        max-width: min(95vw, 500px);
+        margin: 0 auto;
+        padding: 15px;
+        padding-bottom: 40px !important;
+      }
+      
+      .board-wrapper {
+        width: 100%;
+      }
+      
+      .board-controls {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .board-controls .new-game-btn,
+      .board-controls .language-selector {
+        width: 100%;
+      }
+      
+      .board-controls .language-selector select {
+        width: 100%;
       }
       
       #chessboard {
-        width: min(90vw, 500px);
-        height: min(90vw, 500px);
-        max-width: 500px;
-        max-height: 500px;
+        width: 100%;
+        aspect-ratio: 1;
       }
       
       .square { 
-        font-size: 2em;
-        width: 12.5%;
-        height: 12.5%;
+        font-size: clamp(1.8em, 7vw, 2.5em);
       }
       
       .rank-coords {
@@ -798,6 +811,29 @@ export function getFullHTMLTemplate(lang: Language): string {
     <!-- 游戏区域 -->
     <div class="game-area" id="game-area">
       <div class="board-container">
+        <!-- 棋盘顶部控制栏 -->
+        <div class="board-controls">
+          <button class="new-game-btn" onclick="openGameSetup()">
+            <span id="new-game-btn-board">${t('newGame')}</span>
+          </button>
+          <div class="language-selector">
+            <select id="language-select-board">
+              <option value="zh-CN" ${lang === 'zh-CN' ? 'selected' : ''}>简体中文</option>
+              <option value="zh-TW" ${lang === 'zh-TW' ? 'selected' : ''}>繁體中文</option>
+              <option value="en" ${lang === 'en' ? 'selected' : ''}>English</option>
+              <option value="fr" ${lang === 'fr' ? 'selected' : ''}>Français</option>
+              <option value="es" ${lang === 'es' ? 'selected' : ''}>Español</option>
+              <option value="de" ${lang === 'de' ? 'selected' : ''}>Deutsch</option>
+              <option value="it" ${lang === 'it' ? 'selected' : ''}>Italiano</option>
+              <option value="pt" ${lang === 'pt' ? 'selected' : ''}>Português</option>
+              <option value="ru" ${lang === 'ru' ? 'selected' : ''}>Русский</option>
+              <option value="ar" ${lang === 'ar' ? 'selected' : ''}>العربية</option>
+              <option value="ja" ${lang === 'ja' ? 'selected' : ''}>日本語</option>
+              <option value="ko" ${lang === 'ko' ? 'selected' : ''}>한국어</option>
+            </select>
+          </div>
+        </div>
+        
         <!-- 欢迎消息 -->
         <div class="welcome-message" id="welcome-message">
           <h2 id="welcome-title">${t('appName')}</h2>
@@ -950,14 +986,34 @@ export function getFullHTMLTemplate(lang: Language): string {
       updateLanguage();
       renderBoard();
       
-      // 语言切换
-      document.getElementById('language-select').addEventListener('change', (e) => {
-        currentLanguage = e.target.value;
-        updateLanguage();
-        const url = new URL(window.location.href);
-        url.searchParams.set('lang', currentLanguage);
-        window.history.replaceState({}, '', url);
-      });
+      // 语言切换（侧边栏）
+      const langSelectSidebar = document.getElementById('language-select');
+      if (langSelectSidebar) {
+        langSelectSidebar.addEventListener('change', (e) => {
+          currentLanguage = e.target.value;
+          updateLanguage();
+          const url = new URL(window.location.href);
+          url.searchParams.set('lang', currentLanguage);
+          window.history.replaceState({}, '', url);
+          // 同步棋盘控制栏的语言选择器
+          const boardLangSelect = document.getElementById('language-select-board');
+          if (boardLangSelect) boardLangSelect.value = currentLanguage;
+        });
+      }
+      
+      // 语言切换（棋盘控制栏）
+      const langSelectBoard = document.getElementById('language-select-board');
+      if (langSelectBoard) {
+        langSelectBoard.addEventListener('change', (e) => {
+          currentLanguage = e.target.value;
+          updateLanguage();
+          const url = new URL(window.location.href);
+          url.searchParams.set('lang', currentLanguage);
+          window.history.replaceState({}, '', url);
+          // 同步侧边栏的语言选择器
+          if (langSelectSidebar) langSelectSidebar.value = currentLanguage;
+        });
+      }
       
       // 游戏模式切换
       document.getElementById('game-mode').addEventListener('change', updateAISelectors);
