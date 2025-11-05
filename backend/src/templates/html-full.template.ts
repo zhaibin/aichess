@@ -195,11 +195,11 @@ export function getFullHTMLTemplate(lang: Language): string {
     }
     
     .file-coords {
-      bottom: -25px;
-      left: 0;
-      right: 0;
+      position: relative;
       display: flex;
       justify-content: space-around;
+      width: 100%;
+      margin-top: 8px;
     }
     
     .file-coord {
@@ -209,9 +209,9 @@ export function getFullHTMLTemplate(lang: Language): string {
     
     .rank-coords {
       position: absolute;
-      left: -25px;
-      top: 0;
-      bottom: 0;
+      left: -30px;
+      top: 3px;
+      bottom: 3px;
       display: flex;
       flex-direction: column-reverse;
       justify-content: space-around;
