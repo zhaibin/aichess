@@ -84,7 +84,7 @@ export function getFullHTMLTemplate(lang: Language): string {
     }
     
     .board-controls .board-title {
-      font-size: 1.5em;
+      font-size: 2em;
       font-weight: bold;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       -webkit-background-clip: text;
@@ -285,7 +285,7 @@ export function getFullHTMLTemplate(lang: Language): string {
       }
       
       .board-controls .board-title {
-        font-size: 1.3em;
+        font-size: 1.6em;
         order: -1;
       }
       
@@ -956,7 +956,7 @@ export function getFullHTMLTemplate(lang: Language): string {
         <span>|</span>
         <a href="/terms?lang=${lang}" target="_blank" id="footer-terms">${t('terms')}</a>
         <span>|</span>
-        <a href="https://github.com/aichess/aichess" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://github.com/zhaibin/aichess" target="_blank" rel="noopener">GitHub</a>
         <span>|</span>
         <a href="mailto:contact@aichess.win">Contact</a>
       </div>
