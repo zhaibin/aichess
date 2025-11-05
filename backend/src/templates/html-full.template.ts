@@ -1390,6 +1390,18 @@ export function getFullHTMLTemplate(lang: Language): string {
                 const result = chess.move({ from: selectedSquare, to: squareName, promotion });
                 if (result) {
                   console.log('本地升变成功:', result);
+                  
+                  // 更新gameState的moves数组
+                  if (!gameState.moves) {
+                    gameState.moves = [];
+                  }
+                  gameState.moves.push({
+                    from: result.from,
+                    to: result.to,
+                    san: result.san,
+                    promotion: result.promotion
+                  });
+                  
                   const now = Date.now();
                   const elapsed = Math.floor((now - lastMoveTime) / 1000);
                   const currentPlayer = gameState.currentTurn === 'w' ? gameState.whitePlayer : gameState.blackPlayer;
@@ -1411,6 +1423,17 @@ export function getFullHTMLTemplate(lang: Language): string {
           const result = chess.move({ from: selectedSquare, to: squareName });
           if (result) {
             console.log('本地移动成功:', result);
+            
+            // 更新gameState的moves数组
+            if (!gameState.moves) {
+              gameState.moves = [];
+            }
+            gameState.moves.push({
+              from: result.from,
+              to: result.to,
+              san: result.san,
+              promotion: result.promotion
+            });
             
             // 更新当前玩家剩余时间
             const now = Date.now();
