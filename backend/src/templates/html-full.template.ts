@@ -63,7 +63,7 @@ export function getFullHTMLTemplate(lang: Language): string {
       justify-content: space-between;
       align-items: center;
       margin-bottom: 15px;
-      gap: 10px;
+      gap: 15px;
     }
     
     .board-controls .new-game-btn {
@@ -76,10 +76,23 @@ export function getFullHTMLTemplate(lang: Language): string {
       cursor: pointer;
       font-weight: 600;
       transition: transform 0.2s;
+      white-space: nowrap;
     }
     
     .board-controls .new-game-btn:hover {
       transform: scale(1.05);
+    }
+    
+    .board-controls .board-title {
+      font-size: 1.5em;
+      font-weight: bold;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      flex: 1;
+      text-align: center;
+      white-space: nowrap;
     }
     
     .board-controls .language-selector select {
@@ -89,6 +102,7 @@ export function getFullHTMLTemplate(lang: Language): string {
       font-size: 0.95em;
       background: white;
       cursor: pointer;
+      white-space: nowrap;
     }
     
     /* 侧边栏 */
@@ -268,6 +282,11 @@ export function getFullHTMLTemplate(lang: Language): string {
       .board-controls {
         flex-direction: column;
         gap: 8px;
+      }
+      
+      .board-controls .board-title {
+        font-size: 1.3em;
+        order: -1;
       }
       
       .board-controls .new-game-btn,
@@ -812,6 +831,7 @@ export function getFullHTMLTemplate(lang: Language): string {
           <button class="new-game-btn" onclick="openGameSetup()">
             <span id="new-game-btn-board">${t('newGame')}</span>
           </button>
+          <h1 class="board-title">AI Chess</h1>
           <div class="language-selector">
             <select id="language-select-board">
               <option value="zh-CN" ${lang === 'zh-CN' ? 'selected' : ''}>简体中文</option>
