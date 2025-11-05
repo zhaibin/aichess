@@ -1269,23 +1269,52 @@ export function getFullHTMLTemplate(lang: Language): string {
       
       // 练习模式（无游戏状态）
       if (!gameState) {
-        console.log('练习模式');
+        console.log('无游戏状态，将自动创建人与人对战');
         if (selectedSquare) {
           // 检查是否需要升变
           const piece = chess.get(selectedSquare);
           const toSquare = chess.parseSquare(squareName);
-          let promotion = undefined;
           
           if (piece && piece.type === 'p' && (toSquare.rank === 7 || toSquare.rank === 0)) {
             console.log('🎯 兵到达底线，需要升变');
-            showPromotionDialog(piece.color).then(selectedPromotion => {
+            showPromotionDialog(piece.color).then(async selectedPromotion => {
               if (selectedPromotion) {
-                const result = chess.move({ from: selectedSquare, to: squareName, promotion: selectedPromotion });
-                if (result) {
-                  console.log('练习升变成功');
-                  renderBoard();
-                  updateMoveHistory();
-                  highlightCurrentTurnPieces();
+                const move = chess.move({ from: selectedSquare, to: squareName, promotion: selectedPromotion });
+                if (move) {
+                  console.log('✅ 升变成功，自动创建游戏');
+                  // 自动创建人与人对战
+                  try {
+                    const createResponse = await fetch('/api/create-game', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        mode: 'human-vs-human',
+                        timeControl: 600,
+                        whitePlayer: { type: 'human', name: 'White' },
+                        blackPlayer: { type: 'human', name: 'Black' }
+                      })
+                    });
+                    gameState = await createResponse.json();
+                    const moveResponse = await fetch('/api/make-move', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        gameId: gameState.id,
+                        from: move.from,
+                        to: move.to,
+                        promotion: move.promotion
+                      })
+                    });
+                    gameState = await moveResponse.json();
+                    chess = new Chess(gameState.fen);
+                    renderBoard();
+                    updateGameInfo();
+                    updateMoveHistory();
+                    startGameTimer();
+                  } catch (error) {
+                    console.error('创建游戏失败:', error);
+                    chess.undo();
+                  }
                 }
               }
               selectedSquare = null;
@@ -1294,14 +1323,43 @@ export function getFullHTMLTemplate(lang: Language): string {
             return;
           }
           
-          const result = chess.move({ from: selectedSquare, to: squareName });
-          if (result) {
-            console.log('练习移动成功');
-            renderBoard();
-            updateMoveHistory(); // 更新行棋历史
-            
-            // 自动选中下一回合棋子（可选）
-            highlightCurrentTurnPieces();
+          const move = chess.move({ from: selectedSquare, to: squareName });
+          if (move) {
+            console.log('✅ 移动成功，自动创建人与人对战');
+            // 自动创建人与人对战
+            try {
+              const createResponse = await fetch('/api/create-game', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  mode: 'human-vs-human',
+                  timeControl: 600,
+                  whitePlayer: { type: 'human', name: 'White' },
+                  blackPlayer: { type: 'human', name: 'Black' }
+                })
+              });
+              gameState = await createResponse.json();
+              const moveResponse = await fetch('/api/make-move', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  gameId: gameState.id,
+                  from: move.from,
+                  to: move.to,
+                  promotion: move.promotion
+                })
+              });
+              gameState = await moveResponse.json();
+              chess = new Chess(gameState.fen);
+              renderBoard();
+              updateGameInfo();
+              updateMoveHistory();
+              startGameTimer();
+            } catch (error) {
+              console.error('创建游戏失败:', error);
+              chess.undo();
+              renderBoard();
+            }
           }
           selectedSquare = null;
           clearHighlights();
