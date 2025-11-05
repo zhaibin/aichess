@@ -275,6 +275,19 @@ export function getFullHTMLTemplate(lang: Language): string {
         height: 12.5%;
       }
       
+      .rank-coords {
+        display: none;
+      }
+      
+      .file-coords {
+        margin-top: 5px;
+        font-size: 0.8em;
+      }
+      
+      .board-container {
+        padding-bottom: 40px !important;
+      }
+      
       .info-panel {
         width: 100%;
         margin-top: 20px;
