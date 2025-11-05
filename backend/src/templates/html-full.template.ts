@@ -850,13 +850,6 @@ export function getFullHTMLTemplate(lang: Language): string {
           </div>
         </div>
         
-        <!-- 欢迎消息 -->
-        <div class="welcome-message" id="welcome-message">
-          <h2 id="welcome-title">${t('appName')}</h2>
-          <p id="welcome-text">${t('welcomeText')}</p>
-          <p id="welcome-features">${t('welcomeFeatures')}</p>
-        </div>
-        
         <div class="board-wrapper">
           <div id="chessboard"></div>
           <!-- 列坐标 (a-h) -->
