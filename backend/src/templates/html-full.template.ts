@@ -742,16 +742,12 @@ export function getFullHTMLTemplate(lang: Language): string {
     <h3 id="promotion-title">选择升变棋子</h3>
     <div class="promotion-options" id="promotion-options"></div>
   </div>
-  <!-- 新游戏按钮 -->
-  <button class="new-game-btn" onclick="openGameSetup()">
-    <span id="new-game-btn-text">${t('newGame')}</span>
-  </button>
   
   <!-- 遮罩层 -->
   <div class="setup-overlay" id="setup-overlay" onclick="closeGameSetup()"></div>
   
-  <!-- 语言选择器 -->
-  <div class="language-selector">
+  <!-- 语言选择器（仅用于侧边栏同步，不显示） -->
+  <div class="language-selector" style="display: none;">
     <select id="language-select">
       <option value="zh-CN" ${lang === 'zh-CN' ? 'selected' : ''}>简体中文</option>
       <option value="zh-TW" ${lang === 'zh-TW' ? 'selected' : ''}>繁體中文</option>
