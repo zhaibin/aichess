@@ -1036,10 +1036,8 @@ export function getFullHTMLTemplate(lang: Language): string {
       };
       
       safeUpdate('new-game-btn-text', t('newGame'));
+      safeUpdate('new-game-btn-board', t('newGame'));
       safeUpdate('new-game-title', t('newGame'));
-      safeUpdate('welcome-title', t('appName'));
-      safeUpdate('welcome-text', t('welcomeText'));
-      safeUpdate('welcome-features', t('welcomeFeatures'));
       safeUpdate('game-mode-label', t('newGame'));
       safeUpdate('time-control-label', t('timeControl'));
       safeUpdate('white-ai-label', t('whitePlayer') + ' ' + t('ai'));
@@ -1147,7 +1145,6 @@ export function getFullHTMLTemplate(lang: Language): string {
         chess = new Chess(gameState.fen);
         
         closeGameSetup();
-        document.getElementById('welcome-message').classList.add('hidden');
         
         renderBoard();
         updateGameInfo();
