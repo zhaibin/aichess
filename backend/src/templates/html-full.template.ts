@@ -1290,8 +1290,8 @@ export function getFullHTMLTemplate(lang: Language): string {
                       body: JSON.stringify({
                         mode: 'human-vs-human',
                         timeControl: 600,
-                        whitePlayer: { type: 'human', name: 'White' },
-                        blackPlayer: { type: 'human', name: 'Black' }
+                        whitePlayerType: 'human',
+                        blackPlayerType: 'human'
                       })
                     });
                     gameState = await createResponse.json();
@@ -1334,8 +1334,8 @@ export function getFullHTMLTemplate(lang: Language): string {
                 body: JSON.stringify({
                   mode: 'human-vs-human',
                   timeControl: 600,
-                  whitePlayer: { type: 'human', name: 'White' },
-                  blackPlayer: { type: 'human', name: 'Black' }
+                  whitePlayerType: 'human',
+                  blackPlayerType: 'human'
                 })
               });
               gameState = await createResponse.json();
