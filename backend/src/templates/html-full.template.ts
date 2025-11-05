@@ -246,7 +246,54 @@ export function getFullHTMLTemplate(lang: Language): string {
     }
     
     @media (max-width: 768px) {
-      .square { font-size: 2.5em; }
+      .container {
+        flex-direction: column;
+        padding: 10px;
+      }
+      
+      .game-setup-sidebar {
+        width: 100%;
+        max-width: none;
+      }
+      
+      .board-container {
+        width: 100%;
+        max-width: 100vw;
+        padding: 10px;
+      }
+      
+      #chessboard {
+        width: min(90vw, 500px);
+        height: min(90vw, 500px);
+        max-width: 500px;
+        max-height: 500px;
+      }
+      
+      .square { 
+        font-size: 2em;
+        width: 12.5%;
+        height: 12.5%;
+      }
+      
+      .info-panel {
+        width: 100%;
+        margin-top: 20px;
+      }
+      
+      .move-history {
+        max-height: 200px;
+      }
+      
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+      }
+      
+      .footer-links span {
+        display: none;
+      }
     }
     
     /* 信息面板 */
